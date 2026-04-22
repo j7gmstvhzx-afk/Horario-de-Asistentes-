@@ -35,7 +35,7 @@ export default async function AdminDashboard() {
       prisma.shift.count({
         where: {
           date: { gte: start, lte: end },
-          signature: null,
+          signature: { is: null },
         },
       }),
     ]);
