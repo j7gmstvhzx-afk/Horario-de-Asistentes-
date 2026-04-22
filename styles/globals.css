@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-surface text-ink font-sans min-h-screen antialiased;
+  }
+
+  *:focus-visible {
+    @apply outline-none ring-2 ring-brand-400 ring-offset-2 ring-offset-surface;
+  }
+
+  ::selection {
+    background: theme("colors.brand.200");
+    color: theme("colors.ink.DEFAULT");
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl bg-surface-raised border border-border shadow-card;
+  }
+
+  .card-raised {
+    @apply rounded-2xl bg-surface-raised border border-border shadow-soft;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700;
+  }
+}

@@ -1,0 +1,188 @@
+// Casino Atlántico Manatí — Horario de Asistentes
+// PostgreSQL + Prisma schema.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  EMPLOYEE
+  ADMIN
+}
+
+enum Position {
+  SLOT_ATTENDANT
+  SUPERVISOR
+}
+
+enum BreakType {
+  NONE
+  VACATION
+  SICK
+  PERSONAL
+}
+
+enum PtoType {
+  VACATION
+  SICK
+}
+
+enum PtoStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model User {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  passwordHash  String
+  fullName      String
+  email         String?  @unique
+  role          Role     @default(EMPLOYEE)
+  position      Position @default(SLOT_ATTENDANT)
+  active        Boolean  @default(true)
+  hourlyRate    Decimal  @default(11.33) @db.Decimal(10, 2)
+  vacationHours Decimal  @default(0) @db.Decimal(10, 2)
+  sickHours     Decimal  @default(0) @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  shifts       Shift[]
+  signatures   Signature[]
+  ptoRequests  PtoRequest[]
+  hoursEntries HoursEntry[]
+  accrualLogs  PtoAccrualLog[]
+  balanceEdits BalanceEdit[]  @relation("BalanceEditsOnUser")
+  balanceEditsMade BalanceEdit[] @relation("BalanceEditsByAdmin")
+
+  @@index([active])
+  @@index([position])
+}
+
+model Shift {
+  id         String     @id @default(cuid())
+  userId     String
+  date       DateTime   @db.Date
+  startTime  DateTime
+  endTime    DateTime
+  lunchStart DateTime?
+  lunchEnd   DateTime?
+  breakType  BreakType  @default(NONE)
+  notes      String?
+  version    Int        @default(1)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  signature Signature?
+
+  @@index([userId, date])
+  @@index([date])
+}
+
+model Signature {
+  id        String   @id @default(cuid())
+  shiftId   String   @unique
+  userId    String
+  signedAt  DateTime @default(now())
+  ipAddress String?
+  userAgent String?
+
+  shift Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PtoRequest {
+  id         String    @id @default(cuid())
+  userId     String
+  type       PtoType
+  startDate  DateTime  @db.Date
+  endDate    DateTime  @db.Date
+  hours      Decimal   @db.Decimal(10, 2)
+  status     PtoStatus @default(PENDING)
+  reason     String?
+  reviewedBy String?
+  reviewedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+}
+
+// Weekly tip report — replicates the "Slot Attendant Tip Report 2026" Excel.
+model TipReport {
+  id         String   @id @default(cuid())
+  weekStart  DateTime @unique @db.Date
+  weekEnd    DateTime @db.Date
+  preparedBy String
+  hourlyRate Decimal  @db.Decimal(10, 2)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  dailyTips    DailyTip[]
+  hoursEntries HoursEntry[]
+}
+
+model DailyTip {
+  id       String   @id @default(cuid())
+  reportId String
+  date     DateTime @db.Date
+  totalTip Decimal  @default(0) @db.Decimal(12, 2)
+
+  report TipReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, date])
+}
+
+model HoursEntry {
+  id       String   @id @default(cuid())
+  reportId String
+  userId   String
+  date     DateTime @db.Date
+  hours    Decimal  @default(0) @db.Decimal(6, 2)
+
+  report TipReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, userId, date])
+  @@index([userId])
+}
+
+model PtoAccrualLog {
+  id            String   @id @default(cuid())
+  userId        String
+  month         DateTime @db.Date
+  vacationAdded Decimal  @default(10) @db.Decimal(10, 2)
+  sickAdded     Decimal  @default(8) @db.Decimal(10, 2)
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month])
+}
+
+model BalanceEdit {
+  id             String   @id @default(cuid())
+  userId         String
+  adminId        String
+  vacationDelta  Decimal  @default(0) @db.Decimal(10, 2)
+  sickDelta      Decimal  @default(0) @db.Decimal(10, 2)
+  reason         String?
+  createdAt      DateTime @default(now())
+
+  user  User @relation("BalanceEditsOnUser",  fields: [userId],  references: [id], onDelete: Cascade)
+  admin User @relation("BalanceEditsByAdmin", fields: [adminId], references: [id], onDelete: Restrict)
+
+  @@index([userId])
+}
