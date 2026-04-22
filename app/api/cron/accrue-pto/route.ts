@@ -7,10 +7,16 @@ function firstOfCurrentMonthUTC(): Date {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
 }
 
-export async function POST(req: Request) {
+async function runAccrual(req: Request) {
   try {
-    const secret = req.headers.get("x-cron-secret");
-    if (!secret || secret !== process.env.CRON_SECRET) {
+    const cronSecret = process.env.CRON_SECRET;
+    // Vercel Cron sets `authorization: Bearer <CRON_SECRET>`; allow both styles.
+    const bearer = req.headers.get("authorization");
+    const custom = req.headers.get("x-cron-secret");
+    const provided = bearer?.startsWith("Bearer ")
+      ? bearer.slice(7)
+      : custom ?? undefined;
+    if (!cronSecret || !provided || provided !== cronSecret) {
       return fail("Invalid secret", 401);
     }
 
@@ -52,3 +58,6 @@ export async function POST(req: Request) {
     return handleError(err);
   }
 }
+
+export const GET = runAccrual;
+export const POST = runAccrual;

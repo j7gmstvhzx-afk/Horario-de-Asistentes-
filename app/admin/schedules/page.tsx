@@ -48,6 +48,7 @@ export default async function AdminSchedulesPage({
       </CardHeader>
       <CardContent>
         <SchedulesEditor
+          key={start.toISOString()}
           weekStartIso={start.toISOString()}
           days={days.map((d) => d.toISOString())}
           employees={employees}

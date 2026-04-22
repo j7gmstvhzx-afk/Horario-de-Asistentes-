@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { formatHours } from "@/lib/utils";
 import { RequestForm } from "./request-form";
+import { CancelRequestButton } from "./cancel-button";
 
 export default async function EmployeeRequestsPage() {
   const session = await requireSession();
@@ -79,7 +80,10 @@ export default async function EmployeeRequestsPage() {
                       {r.reason ? ` · ${r.reason}` : null}
                     </p>
                   </div>
-                  <StatusBadge status={r.status} />
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={r.status} />
+                    {r.status === "PENDING" && <CancelRequestButton id={r.id} />}
+                  </div>
                 </li>
               ))}
             </ul>

@@ -77,6 +77,7 @@ export default async function AdminTipsPage({
       </CardHeader>
       <CardContent>
         <TipsEditor
+          key={`${start.toISOString()}-${existing?.id ?? "new"}`}
           weekStartIso={start.toISOString()}
           weekEndIso={end.toISOString()}
           prevWeekIso={addWeeks(start, -1).toISOString()}

@@ -61,7 +61,7 @@ export default async function EmployeeDashboard() {
 
       <section>
         <h2 className="font-display text-2xl font-semibold">
-          Hola, {session.fullName.split(" ")[0]} 👋
+          Hola, {session.fullName.split(" ")[0] ?? session.fullName}
         </h2>
         <p className="text-sm text-ink-muted">
           Este es tu panel. Desde aquí puedes firmar tus horarios, solicitar

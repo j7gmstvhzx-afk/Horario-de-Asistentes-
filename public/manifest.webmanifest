@@ -9,9 +9,9 @@
   "lang": "es",
   "icons": [
     {
-      "src": "/logo-casino-atlantico.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "/logo-casino-atlantico.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]

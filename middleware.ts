@@ -9,8 +9,9 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname.startsWith("/public") ||
     pathname === "/favicon.ico" ||
+    pathname === "/favicon.svg" ||
     pathname === "/manifest.webmanifest" ||
-    pathname === "/logo-casino-atlantico.png" ||
+    pathname === "/logo-casino-atlantico.svg" ||
     PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"))
   ) {
     return NextResponse.next();

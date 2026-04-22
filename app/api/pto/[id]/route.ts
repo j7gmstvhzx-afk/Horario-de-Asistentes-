@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { fail, handleError, ok } from "@/lib/api";
 import { canDeduct } from "@/lib/pto";
@@ -66,6 +66,31 @@ export async function PATCH(
     }
 
     return ok({ updated: true });
+  } catch (err) {
+    return handleError(err);
+  }
+}
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const session = await requireSession();
+    const { id } = await params;
+    const request = await prisma.ptoRequest.findUnique({ where: { id } });
+    if (!request) return fail("Solicitud no encontrada.", 404);
+    if (request.userId !== session.userId) {
+      return fail("Solo puedes cancelar tus propias solicitudes.", 403);
+    }
+    if (request.status !== "PENDING") {
+      return fail("Solo se pueden cancelar solicitudes pendientes.", 409);
+    }
+    await prisma.ptoRequest.update({
+      where: { id },
+      data: { status: "CANCELLED" },
+    });
+    return ok({ cancelled: true });
   } catch (err) {
     return handleError(err);
   }

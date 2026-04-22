@@ -21,8 +21,10 @@ export const metadata: Metadata = {
     "Plataforma para gestión de horarios, firmas digitales, vacaciones y propinas del Casino Atlántico Manatí.",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/favicon.ico",
-    apple: "/logo-casino-atlantico.png",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/logo-casino-atlantico.svg",
   },
 };
 

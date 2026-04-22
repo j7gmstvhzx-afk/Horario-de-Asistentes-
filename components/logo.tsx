@@ -1,5 +1,5 @@
-import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { LogoMark } from "./logo-mark";
 
 type LogoProps = {
   className?: string;
@@ -8,29 +8,22 @@ type LogoProps = {
 };
 
 const sizeMap = {
-  sm: { width: 40, height: 40, textClass: "text-sm" },
-  md: { width: 56, height: 56, textClass: "text-base" },
-  lg: { width: 80, height: 80, textClass: "text-lg" },
+  sm: { px: 36, textClass: "text-sm" },
+  md: { px: 48, textClass: "text-base" },
+  lg: { px: 72, textClass: "text-lg" },
 };
 
 export function Logo({ className, size = "md", showName = true }: LogoProps) {
-  const { width, height, textClass } = sizeMap[size];
+  const { px, textClass } = sizeMap[size];
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <Image
-        src="/logo-casino-atlantico.png"
-        alt="Casino Atlántico Manatí"
-        width={width}
-        height={height}
-        priority
-        className="h-auto w-auto object-contain"
-      />
+      <LogoMark size={px} />
       {showName && (
-        <div className="hidden sm:block">
-          <p className={cn("font-display font-bold leading-tight", textClass)}>
+        <div className="hidden sm:block leading-tight">
+          <p className={cn("font-display font-bold", textClass)}>
             Casino Atlántico
           </p>
-          <p className="text-xs text-ink-muted tracking-widest">MANATÍ</p>
+          <p className="text-xs text-ink-muted tracking-[0.25em]">MANATÍ</p>
         </div>
       )}
     </div>
