@@ -1,0 +1,18 @@
+{
+  "name": "Horario de Asistentes — Casino Atlántico Manatí",
+  "short_name": "Horarios",
+  "description": "Plataforma de horarios, firmas digitales y propinas del Casino Atlántico Manatí.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF9F6",
+  "theme_color": "#4A7BA8",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/logo-casino-atlantico.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
