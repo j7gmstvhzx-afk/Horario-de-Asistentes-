@@ -3,9 +3,12 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Clock, Coffee, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { fromDateString } from "@/lib/dates";
+import { formatTime, formatTimeRange } from "@/lib/time-format";
+import { cn } from "@/lib/utils";
 
 type ShiftRow = {
   id: string;
@@ -20,22 +23,6 @@ type ShiftRow = {
   signedAt: string | null;
 };
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("es-ES", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("es-ES", {
-    weekday: "long",
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 function breakLabel(breakType: ShiftRow["breakType"]) {
   switch (breakType) {
     case "VACATION":
@@ -49,7 +36,7 @@ function breakLabel(breakType: ShiftRow["breakType"]) {
   }
 }
 
-export function ScheduleTable({ shifts }: { shifts: ShiftRow[] }) {
+export function ScheduleList({ shifts }: { shifts: ShiftRow[] }) {
   const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
   const [, startTransition] = useTransition();
@@ -72,91 +59,108 @@ export function ScheduleTable({ shifts }: { shifts: ShiftRow[] }) {
 
   if (shifts.length === 0) {
     return (
-      <p className="py-8 text-center text-sm text-ink-muted">
-        No tienes turnos programados en las próximas semanas.
-      </p>
+      <div className="rounded-2xl border border-dashed border-border bg-surface-raised p-8 text-center">
+        <Clock className="mx-auto h-8 w-8 text-ink-faint" />
+        <p className="mt-3 text-sm font-medium">Sin turnos programados</p>
+        <p className="text-xs text-ink-muted">
+          Tu administrador aún no te ha asignado horarios.
+        </p>
+      </div>
     );
   }
 
+  // Group shifts by date.
+  const groups = new Map<string, ShiftRow[]>();
+  for (const s of shifts) {
+    const list = groups.get(s.date) ?? [];
+    list.push(s);
+    groups.set(s.date, list);
+  }
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[640px] border-separate border-spacing-0 text-sm">
-        <thead>
-          <tr className="bg-surface-sunken text-left text-xs uppercase tracking-wide text-ink-muted">
-            <th className="rounded-l-xl px-4 py-3">Fecha</th>
-            <th className="px-4 py-3">Horario</th>
-            <th className="px-4 py-3">Almuerzo</th>
-            <th className="px-4 py-3">Notas</th>
-            <th className="px-4 py-3">Estado</th>
-            <th className="rounded-r-xl px-4 py-3 text-right">Acción</th>
-          </tr>
-        </thead>
-        <tbody>
-          {shifts.map((s, idx) => {
-            const brk = breakLabel(s.breakType);
-            return (
-              <tr
-                key={s.id}
-                className={
-                  idx % 2 === 0
-                    ? "bg-surface-raised"
-                    : "bg-surface-sunken/60"
-                }
-              >
-                <td className="border-b border-border px-4 py-3 align-top capitalize">
-                  {formatDate(s.date)}
-                </td>
-                <td className="border-b border-border px-4 py-3 align-top">
-                  {formatTime(s.startTime)} – {formatTime(s.endTime)}
-                </td>
-                <td className="border-b border-border px-4 py-3 align-top">
-                  {s.lunchStart && s.lunchEnd
-                    ? `${formatTime(s.lunchStart)} – ${formatTime(s.lunchEnd)}`
-                    : "—"}
-                </td>
-                <td className="border-b border-border px-4 py-3 align-top">
-                  <div className="flex flex-col gap-1">
-                    {brk && <Badge variant={brk.variant}>{brk.label}</Badge>}
-                    {s.notes && (
-                      <span className="text-xs text-ink-muted">{s.notes}</span>
+    <ul className="flex flex-col gap-5">
+      {[...groups.entries()].map(([date, rows]) => {
+        const d = fromDateString(date);
+        return (
+          <li key={date}>
+            <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-ink-muted">
+              {d
+                .toLocaleDateString("es-ES", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                })
+                .replace(/^\w/, (c) => c.toUpperCase())}
+            </h3>
+            <ul className="flex flex-col gap-2">
+              {rows.map((s) => {
+                const brk = breakLabel(s.breakType);
+                return (
+                  <li
+                    key={s.id}
+                    className={cn(
+                      "overflow-hidden rounded-2xl border border-border bg-surface-raised shadow-card",
+                      s.signed && "border-l-4 border-l-success-fg",
+                      !s.signed && brk === null && "border-l-4 border-l-warning-fg",
+                      brk !== null && "border-l-4 border-l-brand-500",
                     )}
-                  </div>
-                </td>
-                <td className="border-b border-border px-4 py-3 align-top">
-                  {s.signed ? (
-                    <Badge variant="success" className="gap-1">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Firmado
-                    </Badge>
-                  ) : (
-                    <Badge variant="warning">Pendiente</Badge>
-                  )}
-                </td>
-                <td className="border-b border-border px-4 py-3 text-right align-top">
-                  {s.signed ? (
-                    <span className="text-xs text-ink-muted">
-                      {s.signedAt
-                        ? new Date(s.signedAt).toLocaleString("es-ES", {
-                            dateStyle: "short",
-                            timeStyle: "short",
-                          })
-                        : ""}
-                    </span>
-                  ) : (
-                    <Button
-                      size="sm"
-                      onClick={() => sign(s.id)}
-                      disabled={pending === s.id}
-                    >
-                      {pending === s.id ? "Firmando…" : "Firmar"}
-                    </Button>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+                  >
+                    <div className="flex items-center justify-between gap-3 p-4">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-display text-base font-semibold">
+                          {formatTimeRange(s.startTime, s.endTime)}
+                        </p>
+                        {s.lunchStart && s.lunchEnd && (
+                          <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
+                            <Coffee className="h-3.5 w-3.5" />
+                            Break {formatTime(s.lunchStart)} –{" "}
+                            {formatTime(s.lunchEnd)}
+                          </p>
+                        )}
+                        {s.notes && (
+                          <p className="mt-1 text-xs text-ink-muted">
+                            {s.notes}
+                          </p>
+                        )}
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                          {brk && <Badge variant={brk.variant}>{brk.label}</Badge>}
+                          {s.signed ? (
+                            <Badge variant="success" className="gap-1">
+                              <CheckCircle2 className="h-3 w-3" />
+                              Firmado
+                            </Badge>
+                          ) : brk === null ? (
+                            <Badge variant="warning">Sin firmar</Badge>
+                          ) : null}
+                          {s.signedAt && (
+                            <span className="text-[10px] text-ink-faint">
+                              {new Date(s.signedAt).toLocaleDateString("es-ES", {
+                                day: "2-digit",
+                                month: "short",
+                              })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {!s.signed && brk === null && (
+                        <Button
+                          size="sm"
+                          onClick={() => sign(s.id)}
+                          disabled={pending === s.id}
+                          className="shrink-0"
+                        >
+                          <PenLine className="h-4 w-4" />
+                          {pending === s.id ? "…" : "Firmar"}
+                        </Button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

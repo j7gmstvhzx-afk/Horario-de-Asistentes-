@@ -1,34 +1,32 @@
 import Link from "next/link";
-import { CalendarClock, CheckCircle2, Coins, Plane } from "lucide-react";
+import { Clock, Coffee, CheckCircle2, AlertCircle } from "lucide-react";
+import { addWeeks } from "date-fns";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { weekStart, weekEnd } from "@/lib/dates";
-import { addWeeks } from "date-fns";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { weekStart, weekEnd, toDateString } from "@/lib/dates";
+import { formatTime, formatTimeRange } from "@/lib/time-format";
+import { PageHeader, PageContent } from "@/components/page-header";
+import { Greeting } from "@/components/greeting";
+import { GlassCard } from "@/components/glass-card";
 import { Badge } from "@/components/ui/badge";
-import { formatHours, formatMoney } from "@/lib/utils";
+import { LogoMark } from "@/components/logo-mark";
 import { PendingSignaturesModal } from "./pending-signatures-modal";
+import { DashboardDayStrip } from "./dashboard-day-strip";
 
 export default async function EmployeeDashboard() {
   const session = await requireSession();
-
   const today = new Date();
   const rangeStart = weekStart(today);
   const rangeEnd = weekEnd(addWeeks(today, 1));
 
-  const [user, shifts, pendingPto] = await Promise.all([
+  const [user, shifts] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: session.userId },
       select: {
+        fullName: true,
+        hourlyRate: true,
         vacationHours: true,
         sickHours: true,
-        hourlyRate: true,
         position: true,
       },
     }),
@@ -40,180 +38,261 @@ export default async function EmployeeDashboard() {
       include: { signature: true },
       orderBy: { date: "asc" },
     }),
-    prisma.ptoRequest.count({
-      where: { userId: session.userId, status: "PENDING" },
-    }),
   ]);
 
+  const shiftsByDate = new Map<string, (typeof shifts)[number]>();
+  for (const s of shifts) {
+    shiftsByDate.set(toDateString(s.date), s);
+  }
+  const shiftDates = new Set(shiftsByDate.keys());
   const pending = shifts.filter((s) => !s.signature);
 
   return (
-    <div className="flex flex-col gap-6">
+    <>
       <PendingSignaturesModal
         pending={pending.map((s) => ({
           id: s.id,
-          date: s.date.toISOString(),
+          date: toDateString(s.date),
           startTime: s.startTime.toISOString(),
           endTime: s.endTime.toISOString(),
           breakType: s.breakType,
         }))}
       />
 
-      <section>
-        <h2 className="font-display text-2xl font-semibold">
-          Hola, {session.fullName.split(" ")[0] ?? session.fullName}
-        </h2>
-        <p className="text-sm text-ink-muted">
-          Este es tu panel. Desde aquí puedes firmar tus horarios, solicitar
-          tiempo libre y revisar tu balance.
-        </p>
-      </section>
+      <PageHeader>
+        <div className="mb-6 flex items-center justify-between">
+          <LogoMark size={44} className="drop-shadow" />
+          <Link
+            href="/login"
+            className="text-xs font-medium text-white/80 hover:text-white"
+          >
+            {/* placeholder for future quick actions */}
+          </Link>
+        </div>
+        <Greeting name={user.fullName} />
+        <div className="mt-6">
+          <DashboardDayStrip
+            shiftDates={Array.from(shiftDates)}
+            todayISO={toDateString(today)}
+          />
+        </div>
+      </PageHeader>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={<CalendarClock className="h-5 w-5" />}
-          label="Turnos esta quincena"
-          value={shifts.length.toString()}
-          hint={`${pending.length} sin firmar`}
-          tone={pending.length > 0 ? "warning" : "success"}
-        />
-        <StatCard
-          icon={<Plane className="h-5 w-5" />}
-          label="Vacaciones disponibles"
-          value={formatHours(Number(user.vacationHours))}
-          hint="Acumulas 10h/mes"
-        />
-        <StatCard
-          icon={<CheckCircle2 className="h-5 w-5" />}
-          label="Enfermedad disponible"
-          value={formatHours(Number(user.sickHours))}
-          hint="Acumulas 8h/mes"
-        />
-        <StatCard
-          icon={<Coins className="h-5 w-5" />}
-          label="Rate por hora"
-          value={formatMoney(Number(user.hourlyRate))}
-          hint={user.position === "SLOT_ATTENDANT" ? "+ propinas" : undefined}
-        />
-      </section>
+      <PageContent>
+        <section className="flex flex-col gap-4 pb-8">
+          <TodayShiftCard
+            shift={shiftsByDate.get(toDateString(today))}
+            todayISO={toDateString(today)}
+          />
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Próximos turnos</CardTitle>
-            <CardDescription>
-              Turnos de esta semana y la siguiente.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {shifts.length === 0 ? (
-              <p className="text-sm text-ink-muted">
-                No tienes turnos programados todavía.
-              </p>
-            ) : (
-              <ul className="flex flex-col divide-y divide-border">
-                {shifts.map((s) => (
-                  <li
-                    key={s.id}
-                    className="flex items-center justify-between py-3 text-sm"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {s.date.toLocaleDateString("es-ES", {
-                          weekday: "long",
-                          day: "2-digit",
-                          month: "short",
-                        })}
-                      </p>
-                      <p className="text-ink-muted">
-                        {s.startTime.toLocaleTimeString("es-ES", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}{" "}
-                        –{" "}
-                        {s.endTime.toLocaleTimeString("es-ES", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    </div>
-                    {s.signature ? (
-                      <Badge variant="success">Firmado</Badge>
-                    ) : (
-                      <Badge variant="warning">Sin firmar</Badge>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+          <UpcomingShifts
+            shifts={shifts
+              .filter((s) => toDateString(s.date) > toDateString(today))
+              .map((s) => ({
+                id: s.id,
+                date: toDateString(s.date),
+                startTime: s.startTime.toISOString(),
+                endTime: s.endTime.toISOString(),
+                signed: Boolean(s.signature),
+                breakType: s.breakType,
+              }))}
+          />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Solicitudes pendientes</CardTitle>
-            <CardDescription>
-              Estado de tus solicitudes de vacaciones y enfermedad.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <p className="text-sm">
-              Tienes{" "}
-              <span className="font-semibold">{pendingPto}</span> solicitud(es) en
-              revisión.
-            </p>
-            <Link
-              href="/employee/requests"
-              className="text-sm font-medium text-brand-700 hover:underline"
-            >
-              Ver mis solicitudes →
-            </Link>
-          </CardContent>
-        </Card>
-      </section>
-    </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <BalanceCard
+              label="Vacaciones"
+              hours={Number(user.vacationHours)}
+            />
+            <BalanceCard label="Enfermedad" hours={Number(user.sickHours)} />
+          </div>
+        </section>
+      </PageContent>
+    </>
   );
 }
 
-function StatCard({
-  icon,
-  label,
-  value,
-  hint,
-  tone,
+function TodayShiftCard({
+  shift,
+  todayISO,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  hint?: string;
-  tone?: "success" | "warning" | "danger";
+  shift:
+    | {
+        startTime: Date;
+        endTime: Date;
+        lunchStart: Date | null;
+        lunchEnd: Date | null;
+        signature: { signedAt: Date } | null;
+        breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL";
+      }
+    | undefined;
+  todayISO: string;
 }) {
-  const toneClass =
-    tone === "warning"
-      ? "bg-warning text-warning-fg"
-      : tone === "success"
-      ? "bg-success text-success-fg"
-      : tone === "danger"
-      ? "bg-danger text-danger-fg"
-      : "bg-brand-100 text-brand-700";
+  if (!shift) {
+    return (
+      <GlassCard className="p-5 text-center">
+        <p className="text-xs font-medium uppercase tracking-wider text-brand-600">
+          Hoy · {new Date(todayISO + "T12:00:00").toLocaleDateString("es-ES", {
+            weekday: "long",
+            day: "numeric",
+            month: "short",
+          })}
+        </p>
+        <p className="mt-2 font-display text-lg font-semibold">
+          No tienes turno hoy
+        </p>
+        <p className="text-sm text-ink-muted">Descansa 🏖️</p>
+      </GlassCard>
+    );
+  }
+  const signed = Boolean(shift.signature);
+  const isBreak = shift.breakType !== "NONE";
   return (
-    <Card className="animate-slide-up">
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-ink-muted">
-              {label}
-            </p>
-            <p className="mt-1 font-display text-2xl font-semibold">{value}</p>
-            {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
-          </div>
-          <span
-            className={`flex h-10 w-10 items-center justify-center rounded-full ${toneClass}`}
+    <GlassCard className="p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <p className="text-xs font-semibold uppercase tracking-wider text-brand-600">
+          Tu turno de hoy
+        </p>
+        {isBreak ? (
+          <Badge
+            variant={
+              shift.breakType === "VACATION"
+                ? "success"
+                : shift.breakType === "SICK"
+                ? "warning"
+                : "muted"
+            }
           >
-            {icon}
-          </span>
-        </div>
-      </CardContent>
-    </Card>
+            {shift.breakType === "VACATION"
+              ? "Vacaciones"
+              : shift.breakType === "SICK"
+              ? "Enfermedad"
+              : "Personal"}
+          </Badge>
+        ) : signed ? (
+          <Badge variant="success" className="gap-1">
+            <CheckCircle2 className="h-3 w-3" />
+            Firmado
+          </Badge>
+        ) : (
+          <Badge variant="warning" className="gap-1">
+            <AlertCircle className="h-3 w-3" />
+            Sin firmar
+          </Badge>
+        )}
+      </div>
+      <p className="font-display text-3xl font-bold text-ink">
+        {formatTimeRange(shift.startTime, shift.endTime)}
+      </p>
+      {shift.lunchStart && shift.lunchEnd && (
+        <p className="mt-2 flex items-center gap-2 text-sm text-ink-muted">
+          <Coffee className="h-4 w-4" />
+          Break {formatTimeRange(shift.lunchStart, shift.lunchEnd)}
+        </p>
+      )}
+      {!signed && !isBreak && (
+        <Link
+          href="/employee/schedule"
+          className="mt-4 inline-flex h-10 items-center justify-center rounded-xl bg-brand-500 px-4 text-sm font-medium text-white shadow-card transition-all hover:bg-brand-600 active:scale-[0.98]"
+        >
+          Firmar turno
+        </Link>
+      )}
+    </GlassCard>
+  );
+}
+
+function UpcomingShifts({
+  shifts,
+}: {
+  shifts: {
+    id: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    signed: boolean;
+    breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL";
+  }[];
+}) {
+  if (shifts.length === 0) return null;
+  return (
+    <section>
+      <div className="mb-2 flex items-center justify-between px-1">
+        <h2 className="font-display text-sm font-semibold uppercase tracking-wider text-ink-muted">
+          Próximos turnos
+        </h2>
+        <Link
+          href="/employee/schedule"
+          className="text-xs font-medium text-brand-700 hover:underline"
+        >
+          Ver todos
+        </Link>
+      </div>
+      <ul className="flex flex-col gap-2">
+        {shifts.slice(0, 4).map((s) => {
+          const d = new Date(s.date + "T12:00:00");
+          return (
+            <li key={s.id}>
+              <Link
+                href="/employee/schedule"
+                className="flex items-center gap-3 rounded-2xl border border-border bg-surface-raised p-3 shadow-card transition-all hover:border-brand-200 hover:shadow-soft"
+              >
+                <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+                  <span className="text-[10px] font-semibold uppercase leading-none">
+                    {d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}
+                  </span>
+                  <span className="font-display text-lg font-bold leading-none">
+                    {d.getDate()}
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium capitalize">
+                    {d.toLocaleDateString("es-ES", { weekday: "long" })}
+                  </p>
+                  <p className="flex items-center gap-1 text-xs text-ink-muted">
+                    <Clock className="h-3 w-3" />
+                    {formatTime(s.startTime)} – {formatTime(s.endTime)}
+                  </p>
+                </div>
+                {s.breakType !== "NONE" ? (
+                  <Badge
+                    variant={
+                      s.breakType === "VACATION"
+                        ? "success"
+                        : s.breakType === "SICK"
+                        ? "warning"
+                        : "muted"
+                    }
+                  >
+                    {s.breakType === "VACATION"
+                      ? "Vac."
+                      : s.breakType === "SICK"
+                      ? "Enf."
+                      : "Pers."}
+                  </Badge>
+                ) : s.signed ? (
+                  <Badge variant="success">Firmado</Badge>
+                ) : (
+                  <Badge variant="warning">Pendiente</Badge>
+                )}
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function BalanceCard({ label, hours }: { label: string; hours: number }) {
+  return (
+    <div className="rounded-2xl border border-border bg-surface-raised p-4 shadow-card">
+      <p className="text-xs font-medium uppercase tracking-wider text-ink-muted">
+        {label}
+      </p>
+      <p className="mt-1 font-display text-2xl font-bold text-ink">
+        {hours.toFixed(hours % 1 === 0 ? 0 : 1)}h
+      </p>
+      <p className="text-xs text-ink-faint">disponibles</p>
+    </div>
   );
 }

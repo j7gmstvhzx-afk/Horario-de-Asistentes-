@@ -10,15 +10,14 @@ const config: Config = {
   theme: {
     container: {
       center: true,
-      padding: "1.5rem",
+      padding: "1.25rem",
       screens: {
         "2xl": "1400px",
       },
     },
     extend: {
       colors: {
-        // Pastel palette for Casino Atlántico Manatí.
-        // Derived from the logo's primary blue (#4A7BA8).
+        // Casino Atlántico Manatí — blue palette.
         brand: {
           DEFAULT: "#4A7BA8",
           50: "#F0F5FA",
@@ -54,7 +53,7 @@ const config: Config = {
           sunken: "#F1EFEA",
         },
         ink: {
-          DEFAULT: "#2C3E50",
+          DEFAULT: "#1E314A",
           muted: "#5C6E80",
           faint: "#8798A8",
         },
@@ -68,12 +67,22 @@ const config: Config = {
         display: ["var(--font-poppins)", "system-ui", "sans-serif"],
       },
       borderRadius: {
-        xl: "1rem",
         "2xl": "1.25rem",
+        "3xl": "1.75rem",
       },
       boxShadow: {
-        soft: "0 4px 14px -2px rgba(44, 62, 80, 0.08)",
-        card: "0 2px 8px -1px rgba(44, 62, 80, 0.06)",
+        soft: "0 8px 24px -8px rgba(30, 49, 74, 0.15)",
+        card: "0 4px 16px -4px rgba(30, 49, 74, 0.08)",
+        glow: "0 0 30px -6px rgba(74, 123, 168, 0.35)",
+        floating: "0 12px 32px -8px rgba(30, 49, 74, 0.25)",
+      },
+      backgroundImage: {
+        "brand-gradient":
+          "linear-gradient(135deg, #4A7BA8 0%, #5E8FBE 40%, #7FA7CE 100%)",
+        "brand-gradient-soft":
+          "linear-gradient(135deg, #D9E6F2 0%, #F0F5FA 100%)",
+        "glass-shine":
+          "linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.55) 100%)",
       },
       keyframes: {
         "fade-in": {
@@ -81,18 +90,23 @@ const config: Config = {
           "100%": { opacity: "1" },
         },
         "slide-up": {
-          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "scale-in": {
           "0%": { opacity: "0", transform: "scale(0.96)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
+        pulse: {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.05)" },
+        },
       },
       animation: {
-        "fade-in": "fade-in 150ms ease-out",
-        "slide-up": "slide-up 200ms ease-out",
-        "scale-in": "scale-in 180ms ease-out",
+        "fade-in": "fade-in 200ms ease-out",
+        "slide-up": "slide-up 300ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "scale-in": "scale-in 220ms cubic-bezier(0.22, 1, 0.36, 1)",
+        "pulse-soft": "pulse 2s ease-in-out infinite",
       },
     },
   },

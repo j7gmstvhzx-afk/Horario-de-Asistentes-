@@ -3,6 +3,7 @@ import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 
 const PUBLIC_PATHS = [
   "/login",
+  "/setup",
   "/api/auth/login",
   "/api/auth/logout",
   "/api/cron",

@@ -1,15 +1,9 @@
 import { addWeeks } from "date-fns";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { weekStart, weekEnd } from "@/lib/dates";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ScheduleTable } from "./schedule-table";
+import { weekStart, weekEnd, toDateString } from "@/lib/dates";
+import { SimpleHeader } from "@/components/page-header";
+import { ScheduleList } from "./schedule-table";
 
 export default async function EmployeeSchedulePage() {
   const session = await requireSession();
@@ -26,32 +20,27 @@ export default async function EmployeeSchedulePage() {
   });
 
   return (
-    <div className="flex flex-col gap-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Mis Horarios</CardTitle>
-          <CardDescription>
-            Revisa y firma tus turnos. Una vez firmado no puedes modificar la
-            firma — contacta al admin si hay errores.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ScheduleTable
-            shifts={shifts.map((s) => ({
-              id: s.id,
-              date: s.date.toISOString(),
-              startTime: s.startTime.toISOString(),
-              endTime: s.endTime.toISOString(),
-              lunchStart: s.lunchStart ? s.lunchStart.toISOString() : null,
-              lunchEnd: s.lunchEnd ? s.lunchEnd.toISOString() : null,
-              breakType: s.breakType,
-              notes: s.notes,
-              signed: Boolean(s.signature),
-              signedAt: s.signature?.signedAt.toISOString() ?? null,
-            }))}
-          />
-        </CardContent>
-      </Card>
-    </div>
+    <>
+      <SimpleHeader
+        title="Mis Horarios"
+        subtitle="Revisa y firma tus turnos"
+      />
+      <main className="mx-auto max-w-2xl px-4 py-5 sm:px-5">
+        <ScheduleList
+          shifts={shifts.map((s) => ({
+            id: s.id,
+            date: toDateString(s.date),
+            startTime: s.startTime.toISOString(),
+            endTime: s.endTime.toISOString(),
+            lunchStart: s.lunchStart?.toISOString() ?? null,
+            lunchEnd: s.lunchEnd?.toISOString() ?? null,
+            breakType: s.breakType,
+            notes: s.notes,
+            signed: Boolean(s.signature),
+            signedAt: s.signature?.signedAt.toISOString() ?? null,
+          }))}
+        />
+      </main>
+    </>
   );
 }

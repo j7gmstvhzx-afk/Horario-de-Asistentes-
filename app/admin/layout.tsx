@@ -1,6 +1,15 @@
 import { redirect } from "next/navigation";
+import { Home, Calendar, Users, Coins, MoreHorizontal } from "lucide-react";
 import { getSession } from "@/lib/auth";
-import { AppHeader } from "@/components/app-header";
+import { BottomNav } from "@/components/bottom-nav";
+
+const tabs = [
+  { href: "/admin/dashboard", label: "Inicio", icon: Home },
+  { href: "/admin/schedules", label: "Turnos", icon: Calendar },
+  { href: "/admin/employees", label: "Equipo", icon: Users },
+  { href: "/admin/tips", label: "Propinas", icon: Coins },
+  { href: "/admin/more", label: "Más", icon: MoreHorizontal },
+];
 
 export default async function AdminLayout({
   children,
@@ -13,8 +22,8 @@ export default async function AdminLayout({
 
   return (
     <div className="min-h-screen bg-surface">
-      <AppHeader session={session} />
-      <main className="container mx-auto py-6">{children}</main>
+      <div className="pb-tabbar">{children}</div>
+      <BottomNav tabs={tabs} />
     </div>
   );
 }

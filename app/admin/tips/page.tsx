@@ -1,14 +1,8 @@
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { weekStart, weekEnd, weekDays } from "@/lib/dates";
+import { weekStart, weekEnd, weekDays, toDateString } from "@/lib/dates";
 import { addWeeks } from "date-fns";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { SimpleHeader } from "@/components/page-header";
 import { TipsEditor } from "./tips-editor";
 
 export default async function AdminTipsPage({
@@ -18,7 +12,9 @@ export default async function AdminTipsPage({
 }) {
   const admin = await requireAdmin();
   const params = await searchParams;
-  const reference = params.week ? new Date(params.week) : new Date();
+  const reference = params.week
+    ? new Date(params.week + "T12:00:00")
+    : new Date();
   const start = weekStart(reference);
   const end = weekEnd(reference);
   const days = weekDays(reference);
@@ -46,7 +42,7 @@ export default async function AdminTipsPage({
   if (existing) {
     for (const h of existing.hoursEntries) {
       const key = h.userId;
-      const dayKey = h.date.toISOString().slice(0, 10);
+      const dayKey = toDateString(h.date);
       const prev = hoursMap.get(key) ?? {};
       prev[dayKey] = Number(h.hours);
       hoursMap.set(key, prev);
@@ -56,7 +52,7 @@ export default async function AdminTipsPage({
   const dailyTips: Record<string, number> = {};
   if (existing) {
     for (const dt of existing.dailyTips) {
-      dailyTips[dt.date.toISOString().slice(0, 10)] = Number(dt.totalTip);
+      dailyTips[toDateString(dt.date)] = Number(dt.totalTip);
     }
   }
 
@@ -67,29 +63,25 @@ export default async function AdminTipsPage({
   }));
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Slot Attendant Tip Report</CardTitle>
-        <CardDescription>
-          Replica la hoja de cálculo semanal. Ingresa horas trabajadas y propinas
-          por día; los cálculos se actualizan automáticamente.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <>
+      <SimpleHeader
+        title="Reporte de Propinas"
+        subtitle="Slot Attendants"
+      />
+      <main className="mx-auto max-w-5xl px-4 py-5 sm:px-5">
         <TipsEditor
-          key={`${start.toISOString()}-${existing?.id ?? "new"}`}
-          weekStartIso={start.toISOString()}
-          weekEndIso={end.toISOString()}
-          prevWeekIso={addWeeks(start, -1).toISOString()}
-          nextWeekIso={addWeeks(start, 1).toISOString()}
-          days={days.map((d) => d.toISOString())}
+          key={`${toDateString(start)}-${existing?.id ?? "new"}`}
+          weekStartStr={toDateString(start)}
+          weekEndStr={toDateString(end)}
+          prevWeekStr={toDateString(addWeeks(start, -1))}
+          nextWeekStr={toDateString(addWeeks(start, 1))}
+          days={days.map((d) => toDateString(d))}
           employees={employees}
           dailyTips={dailyTips}
           hourlyRate={hourlyRate}
           preparedBy={existing?.preparedBy ?? admin.fullName}
-          existingReportId={existing?.id ?? null}
         />
-      </CardContent>
-    </Card>
+      </main>
+    </>
   );
 }

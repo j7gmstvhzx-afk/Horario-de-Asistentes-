@@ -14,11 +14,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { isNextWeek, isThisWeek } from "@/lib/dates";
+import { fromDateString, isNextWeek, isThisWeek } from "@/lib/dates";
+import { formatTime } from "@/lib/time-format";
 
 type PendingShift = {
   id: string;
-  date: string;
+  date: string; // YYYY-MM-DD
   startTime: string;
   endTime: string;
   breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL";
@@ -33,14 +34,14 @@ export function PendingSignaturesModal({
   const router = useRouter();
 
   const hasNextWeek = useMemo(
-    () => pending.some((s) => isNextWeek(new Date(s.date))),
+    () => pending.some((s) => isNextWeek(fromDateString(s.date))),
     [pending],
   );
 
   const size: "md" | "xl" = hasNextWeek ? "xl" : "md";
 
-  const thisWeek = pending.filter((s) => isThisWeek(new Date(s.date)));
-  const nextWeek = pending.filter((s) => isNextWeek(new Date(s.date)));
+  const thisWeek = pending.filter((s) => isThisWeek(fromDateString(s.date)));
+  const nextWeek = pending.filter((s) => isNextWeek(fromDateString(s.date)));
 
   async function signAll() {
     const results = await Promise.all(
@@ -134,13 +135,13 @@ function PendingGroup({
       </h4>
       <ul className="flex flex-col divide-y divide-border">
         {items.map((s) => {
-          const d = new Date(s.date);
+          const d = fromDateString(s.date);
           return (
             <li
               key={s.id}
               className="flex items-center justify-between py-2 text-sm"
             >
-              <span>
+              <span className="capitalize">
                 {d.toLocaleDateString("es-ES", {
                   weekday: "long",
                   day: "2-digit",
@@ -148,15 +149,7 @@ function PendingGroup({
                 })}
               </span>
               <span className="text-ink-muted">
-                {new Date(s.startTime).toLocaleTimeString("es-ES", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-                {" – "}
-                {new Date(s.endTime).toLocaleTimeString("es-ES", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {formatTime(s.startTime)} – {formatTime(s.endTime)}
               </span>
             </li>
           );

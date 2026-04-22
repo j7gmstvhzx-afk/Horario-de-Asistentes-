@@ -25,6 +25,24 @@ export function weekDays(date: Date): Date[] {
   return Array.from({ length: 7 }, (_, i) => addDays(start, i));
 }
 
+/**
+ * Format a Date as YYYY-MM-DD using local fields (no UTC shift).
+ * Use this when passing dates server → client to avoid timezone drift.
+ */
+export function toDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Parse a YYYY-MM-DD string into a Date at local noon (avoids DST / TZ issues).
+ */
+export function fromDateString(str: string): Date {
+  return new Date(`${str}T12:00:00`);
+}
+
 export function formatMonthYear(date: Date): string {
   const month = format(date, "LLLL", { locale: es });
   const year = format(date, "yyyy");
@@ -35,8 +53,25 @@ export function formatDateShort(date: Date): string {
   return format(date, "dd-MMM-yy", { locale: es });
 }
 
+export function formatDateLong(date: Date): string {
+  return format(date, "EEEE d 'de' MMMM, yyyy", { locale: es });
+}
+
+export function formatDateHeader(date: Date): string {
+  // "Lun 20 Abr"
+  const weekday = format(date, "EEEE", { locale: es });
+  const short = format(date, "d MMM", { locale: es });
+  const cap = weekday.charAt(0).toUpperCase() + weekday.slice(1, 3);
+  return `${cap} ${short}`;
+}
+
 export function formatWeekday(date: Date): string {
   const name = format(date, "EEEE", { locale: es });
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
+
+export function formatWeekdayShort(date: Date): string {
+  const name = format(date, "EEE", { locale: es });
   return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
