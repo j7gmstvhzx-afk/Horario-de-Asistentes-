@@ -1,7 +1,7 @@
 import { Plane, HeartPulse, Coins, Clock } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { weekStart, weekEnd } from "@/lib/dates";
+import { weekStart } from "@/lib/dates";
 import { addWeeks } from "date-fns";
 import {
   Card,
