@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Pencil } from "lucide-react";
+import { Pencil, Plane, HeartPulse, Coins } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,67 +33,68 @@ type Employee = {
 export function EmployeesTable({ employees }: { employees: Employee[] }) {
   if (employees.length === 0) {
     return (
-      <p className="py-8 text-center text-sm text-ink-muted">
-        Aún no hay empleados. Crea el primero con el botón "Nuevo empleado".
-      </p>
+      <div className="rounded-2xl border border-dashed border-border bg-surface-raised p-8 text-center">
+        <p className="text-sm font-medium">Aún no hay empleados</p>
+        <p className="text-xs text-ink-muted">
+          Crea el primero con el botón de arriba.
+        </p>
+      </div>
     );
   }
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px] text-sm">
-        <thead>
-          <tr className="bg-surface-sunken text-left text-xs uppercase tracking-wide text-ink-muted">
-            <th className="rounded-l-xl px-4 py-3">Nombre</th>
-            <th className="px-4 py-3">Usuario</th>
-            <th className="px-4 py-3">Puesto</th>
-            <th className="px-4 py-3 text-right">Rate</th>
-            <th className="px-4 py-3 text-right">Vacaciones</th>
-            <th className="px-4 py-3 text-right">Enfermedad</th>
-            <th className="px-4 py-3">Estado</th>
-            <th className="rounded-r-xl px-4 py-3 text-right">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {employees.map((e, idx) => (
-            <tr
-              key={e.id}
-              className={
-                idx % 2 === 0 ? "bg-surface-raised" : "bg-surface-sunken/60"
-              }
-            >
-              <td className="border-b border-border px-4 py-3 font-medium">
-                {e.fullName}
-              </td>
-              <td className="border-b border-border px-4 py-3 text-ink-muted">
-                {e.username}
-              </td>
-              <td className="border-b border-border px-4 py-3">
-                {e.position === "SLOT_ATTENDANT" ? "Slot Attendant" : "Supervisor"}
-              </td>
-              <td className="border-b border-border px-4 py-3 text-right">
-                {formatMoney(e.hourlyRate)}
-              </td>
-              <td className="border-b border-border px-4 py-3 text-right">
-                {formatHours(e.vacationHours)}
-              </td>
-              <td className="border-b border-border px-4 py-3 text-right">
-                {formatHours(e.sickHours)}
-              </td>
-              <td className="border-b border-border px-4 py-3">
-                {e.active ? (
-                  <Badge variant="success">Activo</Badge>
-                ) : (
-                  <Badge variant="muted">Inactivo</Badge>
-                )}
-              </td>
-              <td className="border-b border-border px-4 py-3 text-right">
-                <EditBalance employee={e} />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <ul className="flex flex-col gap-3">
+      {employees.map((e) => {
+        const initials = e.fullName
+          .split(" ")
+          .map((p) => p[0])
+          .slice(0, 2)
+          .join("")
+          .toUpperCase();
+        return (
+          <li
+            key={e.id}
+            className="rounded-2xl border border-border bg-surface-raised p-4 shadow-card"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-100 font-display text-base font-bold text-brand-700">
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate font-medium">{e.fullName}</p>
+                  {e.active ? (
+                    <Badge variant="success">Activo</Badge>
+                  ) : (
+                    <Badge variant="muted">Inactivo</Badge>
+                  )}
+                </div>
+                <p className="text-xs text-ink-muted">
+                  @{e.username} ·{" "}
+                  {e.position === "SLOT_ATTENDANT"
+                    ? "Slot Attendant"
+                    : "Supervisor"}
+                </p>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="flex items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-brand-700">
+                    <Coins className="h-3 w-3" />
+                    {formatMoney(e.hourlyRate)}/h
+                  </span>
+                  <span className="flex items-center gap-1 rounded-full bg-success/50 px-2 py-1 text-success-fg">
+                    <Plane className="h-3 w-3" />
+                    {formatHours(e.vacationHours)}
+                  </span>
+                  <span className="flex items-center gap-1 rounded-full bg-warning/50 px-2 py-1 text-warning-fg">
+                    <HeartPulse className="h-3 w-3" />
+                    {formatHours(e.sickHours)}
+                  </span>
+                  <EditBalance employee={e} />
+                </div>
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -125,7 +126,7 @@ function EditBalance({ employee }: { employee: Employee }) {
         toast.error(body.error ?? "No se pudo actualizar.");
         return;
       }
-      toast.success("Empleado actualizado ✓");
+      toast.success("Actualizado ✓");
       setOpen(false);
       router.refresh();
     } finally {
@@ -136,15 +137,19 @@ function EditBalance({ employee }: { employee: Employee }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Editar">
-          <Pencil className="h-4 w-4" />
-        </Button>
+        <button
+          type="button"
+          className="ml-auto flex items-center gap-1 rounded-full bg-brand-50 px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-100"
+        >
+          <Pencil className="h-3 w-3" />
+          Editar
+        </button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Editar {employee.fullName}</DialogTitle>
           <DialogDescription>
-            Ajusta el balance y el rate por hora. Los cambios quedan auditados.
+            Ajusta balance y rate por hora. Los cambios quedan auditados.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="flex flex-col gap-3">

@@ -1,14 +1,8 @@
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatHours } from "@/lib/utils";
+import { SimpleHeader } from "@/components/page-header";
 import { RequestActions } from "./request-actions";
 
 export default async function AdminRequestsPage() {
@@ -22,62 +16,69 @@ export default async function AdminRequestsPage() {
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Solicitudes de tiempo libre</CardTitle>
-        <CardDescription>
-          Aprueba o rechaza solicitudes. Al aprobar se descuenta del balance del
-          empleado.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <>
+      <SimpleHeader
+        title="Solicitudes PTO"
+        subtitle="Aprobar o rechazar"
+      />
+      <main className="mx-auto max-w-2xl px-4 py-5 sm:px-5">
         {requests.length === 0 ? (
-          <p className="py-6 text-center text-sm text-ink-muted">
+          <div className="rounded-2xl border border-dashed border-border bg-surface-raised p-8 text-center text-sm text-ink-muted">
             No hay solicitudes aún.
-          </p>
+          </div>
         ) : (
-          <ul className="flex flex-col divide-y divide-border">
+          <ul className="flex flex-col gap-3">
             {requests.map((r) => (
               <li
                 key={r.id}
-                className="flex flex-wrap items-start justify-between gap-3 py-3"
+                className="rounded-2xl border border-border bg-surface-raised p-4 shadow-card"
               >
-                <div>
-                  <p className="font-medium">
-                    {r.user.fullName} ·{" "}
-                    {r.type === "VACATION" ? "Vacaciones" : "Enfermedad"} ·{" "}
-                    {formatHours(Number(r.hours))}
-                  </p>
-                  <p className="text-xs text-ink-muted">
-                    {r.startDate.toLocaleDateString("es-ES", {
-                      day: "2-digit",
-                      month: "short",
-                    })}{" "}
-                    –{" "}
-                    {r.endDate.toLocaleDateString("es-ES", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                    {r.reason ? ` · ${r.reason}` : null}
-                  </p>
-                  <p className="text-xs text-ink-muted">
-                    Balance actual:{" "}
-                    {r.type === "VACATION"
-                      ? formatHours(Number(r.user.vacationHours))
-                      : formatHours(Number(r.user.sickHours))}
-                  </p>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium">{r.user.fullName}</p>
+                      <StatusBadge status={r.status} />
+                    </div>
+                    <p className="mt-1 text-sm">
+                      {r.type === "VACATION" ? "🏖️ Vacaciones" : "🤒 Enfermedad"} ·{" "}
+                      <strong>{formatHours(Number(r.hours))}</strong>
+                    </p>
+                    <p className="text-xs text-ink-muted">
+                      {r.startDate.toLocaleDateString("es-ES", {
+                        day: "2-digit",
+                        month: "short",
+                      })}{" "}
+                      –{" "}
+                      {r.endDate.toLocaleDateString("es-ES", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                    {r.reason && (
+                      <p className="mt-1 text-xs text-ink-faint italic">
+                        "{r.reason}"
+                      </p>
+                    )}
+                    <p className="mt-1 text-xs text-ink-faint">
+                      Balance actual:{" "}
+                      {r.type === "VACATION"
+                        ? formatHours(Number(r.user.vacationHours))
+                        : formatHours(Number(r.user.sickHours))}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <StatusBadge status={r.status} />
-                  {r.status === "PENDING" && <RequestActions id={r.id} />}
-                </div>
+                {r.status === "PENDING" && (
+                  <div className="mt-3 flex justify-end">
+                    <RequestActions id={r.id} />
+                  </div>
+                )}
               </li>
             ))}
           </ul>
         )}
-      </CardContent>
-    </Card>
+      </main>
+    </>
   );
 }
 

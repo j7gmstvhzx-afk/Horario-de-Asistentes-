@@ -1,6 +1,14 @@
 import { redirect } from "next/navigation";
+import { Home, Calendar, FileText, User } from "lucide-react";
 import { getSession } from "@/lib/auth";
-import { AppHeader } from "@/components/app-header";
+import { BottomNav } from "@/components/bottom-nav";
+
+const tabs = [
+  { href: "/employee/dashboard", label: "Inicio", icon: Home },
+  { href: "/employee/schedule", label: "Turnos", icon: Calendar },
+  { href: "/employee/requests", label: "Solicitudes", icon: FileText },
+  { href: "/employee/profile", label: "Perfil", icon: User },
+];
 
 export default async function EmployeeLayout({
   children,
@@ -12,8 +20,8 @@ export default async function EmployeeLayout({
 
   return (
     <div className="min-h-screen bg-surface">
-      <AppHeader session={session} />
-      <main className="container mx-auto py-6">{children}</main>
+      <div className="pb-tabbar">{children}</div>
+      <BottomNav tabs={tabs} />
     </div>
   );
 }

@@ -1,15 +1,11 @@
 import { addWeeks } from "date-fns";
+import { Plus } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { weekStart, weekEnd, weekDays } from "@/lib/dates";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { SchedulesEditor } from "./schedules-editor";
+import { weekStart, weekEnd, weekDays, toDateString } from "@/lib/dates";
+import { SimpleHeader } from "@/components/page-header";
+import { Fab } from "@/components/floating-action-button";
+import { SchedulesList } from "./schedules-editor";
 
 export default async function AdminSchedulesPage({
   searchParams,
@@ -19,7 +15,9 @@ export default async function AdminSchedulesPage({
   await requireAdmin();
 
   const params = await searchParams;
-  const reference = params.week ? new Date(params.week) : new Date();
+  const reference = params.week
+    ? new Date(params.week + "T12:00:00")
+    : new Date();
   const start = weekStart(reference);
   const end = weekEnd(reference);
   const days = weekDays(reference);
@@ -32,32 +30,26 @@ export default async function AdminSchedulesPage({
     }),
     prisma.shift.findMany({
       where: { date: { gte: start, lte: end } },
-      include: { signature: true },
-      orderBy: { date: "asc" },
+      include: { signature: true, user: { select: { fullName: true } } },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
     }),
   ]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Gestión de Horarios</CardTitle>
-        <CardDescription>
-          Crea y edita turnos. El sistema detecta conflictos automáticamente
-          (turnos y almuerzos solapados).
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <SchedulesEditor
-          key={start.toISOString()}
-          weekStartIso={start.toISOString()}
-          days={days.map((d) => d.toISOString())}
+    <>
+      <SimpleHeader title="Horarios" subtitle="Vista semanal" />
+      <main className="mx-auto max-w-2xl px-4 py-5 sm:px-5">
+        <SchedulesList
+          weekStartStr={toDateString(start)}
+          prevWeekStr={toDateString(addWeeks(start, -1))}
+          nextWeekStr={toDateString(addWeeks(start, 1))}
+          days={days.map((d) => toDateString(d))}
           employees={employees}
-          nextWeekIso={addWeeks(start, 1).toISOString()}
-          prevWeekIso={addWeeks(start, -1).toISOString()}
           shifts={shifts.map((s) => ({
             id: s.id,
             userId: s.userId,
-            date: s.date.toISOString(),
+            userName: s.user.fullName,
+            date: toDateString(s.date),
             startTime: s.startTime.toISOString(),
             endTime: s.endTime.toISOString(),
             lunchStart: s.lunchStart?.toISOString() ?? null,
@@ -67,7 +59,10 @@ export default async function AdminSchedulesPage({
             signed: Boolean(s.signature),
           }))}
         />
-      </CardContent>
-    </Card>
+      </main>
+      <Fab href="/admin/schedules/new" label="Nuevo turno">
+        <Plus className="h-6 w-6" />
+      </Fab>
+    </>
   );
 }

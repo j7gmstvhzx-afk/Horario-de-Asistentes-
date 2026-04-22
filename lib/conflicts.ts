@@ -1,16 +1,23 @@
+/**
+ * Conflict detection for schedules.
+ *
+ * IMPORTANT: In a casino, multiple employees working at the same time is
+ * normal and expected. The ONLY real conflict is when two employees take
+ * their break/lunch at the same time, because the floor cannot be unattended.
+ *
+ * So we ONLY detect overlap on lunch windows. Shift windows are not checked.
+ */
+
 export type ShiftWindow = {
   id: string;
   userId: string;
   userName: string;
   date: Date;
-  startTime: Date;
-  endTime: Date;
   lunchStart: Date | null;
   lunchEnd: Date | null;
 };
 
-export type Conflict = {
-  kind: "SHIFT" | "LUNCH";
+export type BreakConflict = {
   date: Date;
   a: { id: string; userName: string };
   b: { id: string; userName: string };
@@ -35,11 +42,13 @@ function overlaps(
 }
 
 /**
- * Returns all pairs of shifts that collide either on their working window or
- * their lunch window. Used by the admin dashboard to surface duplicates.
+ * Returns pairs of shifts whose break/lunch windows overlap on the same day.
+ * Shifts without a defined lunch window are skipped.
  */
-export function detectConflicts(shifts: readonly ShiftWindow[]): Conflict[] {
-  const conflicts: Conflict[] = [];
+export function detectBreakConflicts(
+  shifts: readonly ShiftWindow[],
+): BreakConflict[] {
+  const conflicts: BreakConflict[] = [];
   for (let i = 0; i < shifts.length; i++) {
     for (let j = i + 1; j < shifts.length; j++) {
       const a = shifts[i];
@@ -47,30 +56,14 @@ export function detectConflicts(shifts: readonly ShiftWindow[]): Conflict[] {
       if (!a || !b) continue;
       if (a.userId === b.userId) continue;
       if (!sameDay(a.date, b.date)) continue;
+      if (!a.lunchStart || !a.lunchEnd || !b.lunchStart || !b.lunchEnd) continue;
 
-      if (overlaps(a.startTime, a.endTime, b.startTime, b.endTime)) {
+      if (overlaps(a.lunchStart, a.lunchEnd, b.lunchStart, b.lunchEnd)) {
         conflicts.push({
-          kind: "SHIFT",
           date: a.date,
           a: { id: a.id, userName: a.userName },
           b: { id: b.id, userName: b.userName },
-          message: `Turno solapado entre ${a.userName} y ${b.userName}`,
-        });
-      }
-
-      if (
-        a.lunchStart &&
-        a.lunchEnd &&
-        b.lunchStart &&
-        b.lunchEnd &&
-        overlaps(a.lunchStart, a.lunchEnd, b.lunchStart, b.lunchEnd)
-      ) {
-        conflicts.push({
-          kind: "LUNCH",
-          date: a.date,
-          a: { id: a.id, userName: a.userName },
-          b: { id: b.id, userName: b.userName },
-          message: `Almuerzo solapado entre ${a.userName} y ${b.userName}`,
+          message: `Break solapado entre ${a.userName} y ${b.userName}`,
         });
       }
     }
