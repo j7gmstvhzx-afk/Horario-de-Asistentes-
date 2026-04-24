@@ -1,8 +1,7 @@
 "use client";
 
 import { animate, motion, useMotionValue, useTransform } from "framer-motion";
-import { useEffect } from "react";
-import type { LucideIcon } from "lucide-react";
+import { useEffect, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 type StatCardProps = {
@@ -10,7 +9,7 @@ type StatCardProps = {
   value: number;
   format?: (n: number) => string;
   hint?: string;
-  icon?: LucideIcon;
+  icon?: ReactNode;
   tone?: "default" | "success" | "warning" | "danger" | "accent";
   className?: string;
 };
@@ -28,12 +27,14 @@ export function StatCard({
   value,
   format,
   hint,
-  icon: Icon,
+  icon,
   tone = "default",
   className,
 }: StatCardProps) {
   const mv = useMotionValue(0);
-  const rounded = useTransform(mv, (v) => (format ? format(v) : Math.round(v).toString()));
+  const rounded = useTransform(mv, (v) =>
+    format ? format(v) : Math.round(v).toString(),
+  );
 
   useEffect(() => {
     const controls = animate(mv, value, { duration: 0.9, ease: "easeOut" });
@@ -60,14 +61,14 @@ export function StatCard({
           </motion.p>
           {hint && <p className="mt-1 text-xs text-ink-muted">{hint}</p>}
         </div>
-        {Icon && (
+        {icon && (
           <span
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-full",
               toneClasses[tone],
             )}
           >
-            <Icon className="h-5 w-5" />
+            {icon}
           </span>
         )}
       </div>
