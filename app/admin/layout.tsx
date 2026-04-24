@@ -1,14 +1,13 @@
 import { redirect } from "next/navigation";
-import { Home, Calendar, Users, Coins, MoreHorizontal } from "lucide-react";
 import { getSession } from "@/lib/auth";
-import { BottomNav } from "@/components/bottom-nav";
+import { BottomNav, type TabItem } from "@/components/bottom-nav";
 
-const tabs = [
-  { href: "/admin/dashboard", label: "Inicio", icon: Home },
-  { href: "/admin/schedules", label: "Turnos", icon: Calendar },
-  { href: "/admin/employees", label: "Equipo", icon: Users },
-  { href: "/admin/tips", label: "Propinas", icon: Coins },
-  { href: "/admin/more", label: "Más", icon: MoreHorizontal },
+const tabs: TabItem[] = [
+  { href: "/admin/dashboard", label: "Inicio", icon: "home" },
+  { href: "/admin/schedules", label: "Turnos", icon: "calendar" },
+  { href: "/admin/employees", label: "Equipo", icon: "users" },
+  { href: "/admin/tips", label: "Propinas", icon: "coins" },
+  { href: "/admin/more", label: "Más", icon: "more" },
 ];
 
 export default async function AdminLayout({
