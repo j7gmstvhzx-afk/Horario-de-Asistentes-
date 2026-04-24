@@ -1,13 +1,12 @@
 import { redirect } from "next/navigation";
-import { Home, Calendar, FileText, User } from "lucide-react";
 import { getSession } from "@/lib/auth";
-import { BottomNav } from "@/components/bottom-nav";
+import { BottomNav, type TabItem } from "@/components/bottom-nav";
 
-const tabs = [
-  { href: "/employee/dashboard", label: "Inicio", icon: Home },
-  { href: "/employee/schedule", label: "Turnos", icon: Calendar },
-  { href: "/employee/requests", label: "Solicitudes", icon: FileText },
-  { href: "/employee/profile", label: "Perfil", icon: User },
+const tabs: TabItem[] = [
+  { href: "/employee/dashboard", label: "Inicio", icon: "home" },
+  { href: "/employee/schedule", label: "Turnos", icon: "calendar" },
+  { href: "/employee/requests", label: "Solicitudes", icon: "file" },
+  { href: "/employee/profile", label: "Perfil", icon: "user" },
 ];
 
 export default async function EmployeeLayout({

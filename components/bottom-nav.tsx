@@ -2,13 +2,41 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
+import {
+  Calendar,
+  Coins,
+  FileText,
+  Home,
+  MoreHorizontal,
+  User,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+
+export type TabIconName =
+  | "home"
+  | "calendar"
+  | "file"
+  | "user"
+  | "users"
+  | "coins"
+  | "more";
 
 export type TabItem = {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: TabIconName;
+};
+
+const ICONS: Record<TabIconName, LucideIcon> = {
+  home: Home,
+  calendar: Calendar,
+  file: FileText,
+  user: User,
+  users: Users,
+  coins: Coins,
+  more: MoreHorizontal,
 };
 
 export function BottomNav({ tabs }: { tabs: TabItem[] }) {
@@ -23,7 +51,7 @@ export function BottomNav({ tabs }: { tabs: TabItem[] }) {
           const active =
             pathname === tab.href ||
             (tab.href !== "/" && pathname.startsWith(tab.href));
-          const Icon = tab.icon;
+          const Icon = ICONS[tab.icon];
           return (
             <li key={tab.href} className="flex-1">
               <Link
