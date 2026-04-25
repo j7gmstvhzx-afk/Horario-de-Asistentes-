@@ -16,8 +16,11 @@ import {
 } from "@/components/ui/select";
 import { StepIndicator } from "@/components/step-indicator";
 import { MonthCalendar } from "@/components/month-calendar";
-import { formatTime } from "@/lib/time-format";
+import { addMinutesHM, formatHM12 } from "@/lib/time-format";
 import { cn } from "@/lib/utils";
+
+const SHIFT_MINUTES = 8 * 60 + 30; // 8h 30min total (8h work + 30min break)
+const BREAK_MINUTES = 30;
 
 type Employee = {
   id: string;
@@ -37,9 +40,20 @@ export function NewShiftFlow({ employees }: { employees: Employee[] }) {
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [start, setStart] = useState("08:00");
-  const [end, setEnd] = useState("16:00");
+  const [end, setEnd] = useState(addMinutesHM("08:00", SHIFT_MINUTES));
   const [lunchStart, setLunchStart] = useState("12:00");
-  const [lunchEnd, setLunchEnd] = useState("12:30");
+  const [lunchEnd, setLunchEnd] = useState(
+    addMinutesHM("12:00", BREAK_MINUTES),
+  );
+
+  function onStartChange(value: string) {
+    setStart(value);
+    if (value) setEnd(addMinutesHM(value, SHIFT_MINUTES));
+  }
+  function onLunchStartChange(value: string) {
+    setLunchStart(value);
+    if (value) setLunchEnd(addMinutesHM(value, BREAK_MINUTES));
+  }
   const [breakType, setBreakType] = useState<BreakType>("NONE");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -209,15 +223,18 @@ export function NewShiftFlow({ employees }: { employees: Employee[] }) {
                 id="start"
                 type="time"
                 value={start}
-                onChange={(e) => setStart(e.target.value)}
+                onChange={(e) => onStartChange(e.target.value)}
                 required
               />
-              <p className="text-xs text-ink-faint">
-                {formatTime(`2026-01-01T${start}:00`)}
-              </p>
+              <p className="text-xs text-ink-faint">{formatHM12(start)}</p>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="end">Salida</Label>
+              <Label htmlFor="end">
+                Salida{" "}
+                <span className="text-ink-faint font-normal">
+                  · auto +8h30
+                </span>
+              </Label>
               <Input
                 id="end"
                 type="time"
@@ -225,9 +242,7 @@ export function NewShiftFlow({ employees }: { employees: Employee[] }) {
                 onChange={(e) => setEnd(e.target.value)}
                 required
               />
-              <p className="text-xs text-ink-faint">
-                {formatTime(`2026-01-01T${end}:00`)}
-              </p>
+              <p className="text-xs text-ink-faint">{formatHM12(end)}</p>
             </div>
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="lstart">Break inicio</Label>
@@ -235,17 +250,22 @@ export function NewShiftFlow({ employees }: { employees: Employee[] }) {
                 id="lstart"
                 type="time"
                 value={lunchStart}
-                onChange={(e) => setLunchStart(e.target.value)}
+                onChange={(e) => onLunchStartChange(e.target.value)}
               />
+              <p className="text-xs text-ink-faint">{formatHM12(lunchStart)}</p>
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="lend">Break fin</Label>
+              <Label htmlFor="lend">
+                Break fin{" "}
+                <span className="text-ink-faint font-normal">· auto +30m</span>
+              </Label>
               <Input
                 id="lend"
                 type="time"
                 value={lunchEnd}
                 onChange={(e) => setLunchEnd(e.target.value)}
               />
+              <p className="text-xs text-ink-faint">{formatHM12(lunchEnd)}</p>
             </div>
             <div className="flex flex-col gap-1.5 sm:col-span-2">
               <Label>Tipo</Label>

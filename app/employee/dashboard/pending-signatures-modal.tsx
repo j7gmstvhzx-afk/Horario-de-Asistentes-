@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { fromDateString, isNextWeek, isThisWeek } from "@/lib/dates";
-import { formatTime } from "@/lib/time-format";
+import { formatHM12 } from "@/lib/time-format";
 
 type PendingShift = {
   id: string;
@@ -149,7 +149,7 @@ function PendingGroup({
                 })}
               </span>
               <span className="text-ink-muted">
-                {formatTime(s.startTime)} – {formatTime(s.endTime)}
+                {formatHM12(s.startTime)} – {formatHM12(s.endTime)}
               </span>
             </li>
           );

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { animate, motion, useMotionValue, useTransform } from "framer-motion";
 import { useEffect, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
@@ -10,6 +11,7 @@ type StatCardProps = {
   format?: (n: number) => string;
   hint?: string;
   icon?: ReactNode;
+  href?: string;
   tone?: "default" | "success" | "warning" | "danger" | "accent";
   className?: string;
 };
@@ -28,6 +30,7 @@ export function StatCard({
   format,
   hint,
   icon,
+  href,
   tone = "default",
   className,
 }: StatCardProps) {
@@ -41,16 +44,8 @@ export function StatCard({
     return () => controls.stop();
   }, [mv, value]);
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className={cn(
-        "rounded-3xl border border-white/40 bg-white/85 backdrop-blur-md p-5 shadow-card",
-        className,
-      )}
-    >
+  const inner = (
+    <>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-wider text-ink-muted">
@@ -72,6 +67,29 @@ export function StatCard({
           </span>
         )}
       </div>
+    </>
+  );
+
+  const cardClass = cn(
+    "block rounded-3xl border border-white/40 bg-white/85 backdrop-blur-md p-5 shadow-card",
+    href &&
+      "transition-all hover:shadow-soft hover:bg-white/95 active:scale-[0.98]",
+    className,
+  );
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      {href ? (
+        <Link href={href} className={cardClass}>
+          {inner}
+        </Link>
+      ) : (
+        <div className={cardClass}>{inner}</div>
+      )}
     </motion.div>
   );
 }

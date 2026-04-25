@@ -4,7 +4,7 @@ import { addWeeks } from "date-fns";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { weekStart, weekEnd, toDateString } from "@/lib/dates";
-import { formatTime, formatTimeRange } from "@/lib/time-format";
+import { formatHM12, formatRangeHM12 } from "@/lib/time-format";
 import { PageHeader, PageContent } from "@/components/page-header";
 import { Greeting } from "@/components/greeting";
 import { GlassCard } from "@/components/glass-card";
@@ -53,8 +53,8 @@ export default async function EmployeeDashboard() {
         pending={pending.map((s) => ({
           id: s.id,
           date: toDateString(s.date),
-          startTime: s.startTime.toISOString(),
-          endTime: s.endTime.toISOString(),
+          startTime: s.startTime,
+          endTime: s.endTime,
           breakType: s.breakType,
         }))}
       />
@@ -62,12 +62,6 @@ export default async function EmployeeDashboard() {
       <PageHeader>
         <div className="mb-6 flex items-center justify-between">
           <LogoMark size={44} className="drop-shadow" />
-          <Link
-            href="/login"
-            className="text-xs font-medium text-white/80 hover:text-white"
-          >
-            {/* placeholder for future quick actions */}
-          </Link>
         </div>
         <Greeting name={user.fullName} />
         <div className="mt-6">
@@ -91,8 +85,8 @@ export default async function EmployeeDashboard() {
               .map((s) => ({
                 id: s.id,
                 date: toDateString(s.date),
-                startTime: s.startTime.toISOString(),
-                endTime: s.endTime.toISOString(),
+                startTime: s.startTime,
+                endTime: s.endTime,
                 signed: Boolean(s.signature),
                 breakType: s.breakType,
               }))}
@@ -117,10 +111,10 @@ function TodayShiftCard({
 }: {
   shift:
     | {
-        startTime: Date;
-        endTime: Date;
-        lunchStart: Date | null;
-        lunchEnd: Date | null;
+        startTime: string;
+        endTime: string;
+        lunchStart: string | null;
+        lunchEnd: string | null;
         signature: { signedAt: Date } | null;
         breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL";
       }
@@ -131,7 +125,8 @@ function TodayShiftCard({
     return (
       <GlassCard className="p-5 text-center">
         <p className="text-xs font-medium uppercase tracking-wider text-brand-600">
-          Hoy · {new Date(todayISO + "T12:00:00").toLocaleDateString("es-ES", {
+          Hoy ·{" "}
+          {new Date(todayISO + "T12:00:00").toLocaleDateString("es-ES", {
             weekday: "long",
             day: "numeric",
             month: "short",
@@ -181,12 +176,12 @@ function TodayShiftCard({
         )}
       </div>
       <p className="font-display text-3xl font-bold text-ink">
-        {formatTimeRange(shift.startTime, shift.endTime)}
+        {formatRangeHM12(shift.startTime, shift.endTime)}
       </p>
       {shift.lunchStart && shift.lunchEnd && (
         <p className="mt-2 flex items-center gap-2 text-sm text-ink-muted">
           <Coffee className="h-4 w-4" />
-          Break {formatTimeRange(shift.lunchStart, shift.lunchEnd)}
+          Break {formatRangeHM12(shift.lunchStart, shift.lunchEnd)}
         </p>
       )}
       {!signed && !isBreak && (
@@ -238,7 +233,9 @@ function UpcomingShifts({
               >
                 <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-brand-50 text-brand-700">
                   <span className="text-[10px] font-semibold uppercase leading-none">
-                    {d.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}
+                    {d
+                      .toLocaleDateString("es-ES", { month: "short" })
+                      .replace(".", "")}
                   </span>
                   <span className="font-display text-lg font-bold leading-none">
                     {d.getDate()}
@@ -250,7 +247,7 @@ function UpcomingShifts({
                   </p>
                   <p className="flex items-center gap-1 text-xs text-ink-muted">
                     <Clock className="h-3 w-3" />
-                    {formatTime(s.startTime)} – {formatTime(s.endTime)}
+                    {formatHM12(s.startTime)} – {formatHM12(s.endTime)}
                   </p>
                 </div>
                 {s.breakType !== "NONE" ? (

@@ -7,7 +7,7 @@ import { CheckCircle2, Clock, Coffee, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { fromDateString } from "@/lib/dates";
-import { formatTime, formatTimeRange } from "@/lib/time-format";
+import { formatHM12, formatRangeHM12 } from "@/lib/time-format";
 import { cn } from "@/lib/utils";
 
 type ShiftRow = {
@@ -108,13 +108,13 @@ export function ScheduleList({ shifts }: { shifts: ShiftRow[] }) {
                     <div className="flex items-center justify-between gap-3 p-4">
                       <div className="min-w-0 flex-1">
                         <p className="font-display text-base font-semibold">
-                          {formatTimeRange(s.startTime, s.endTime)}
+                          {formatRangeHM12(s.startTime, s.endTime)}
                         </p>
                         {s.lunchStart && s.lunchEnd && (
                           <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
                             <Coffee className="h-3.5 w-3.5" />
-                            Break {formatTime(s.lunchStart)} –{" "}
-                            {formatTime(s.lunchEnd)}
+                            Break {formatHM12(s.lunchStart)} –{" "}
+                            {formatHM12(s.lunchEnd)}
                           </p>
                         )}
                         {s.notes && (

@@ -105,7 +105,9 @@ function EditBalance({ employee }: { employee: Employee }) {
   const [sick, setSick] = useState(employee.sickHours.toString());
   const [rate, setRate] = useState(employee.hourlyRate.toString());
   const [reason, setReason] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pwLoading, setPwLoading] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -131,6 +133,30 @@ function EditBalance({ employee }: { employee: Employee }) {
       router.refresh();
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function changePassword() {
+    if (newPassword.length < 8) {
+      toast.error("Mínimo 8 caracteres.");
+      return;
+    }
+    setPwLoading(true);
+    try {
+      const res = await fetch(`/api/employees/${employee.id}/password`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ password: newPassword }),
+      });
+      const body = await res.json();
+      if (!body.ok) {
+        toast.error(body.error ?? "No se pudo cambiar la contraseña.");
+        return;
+      }
+      toast.success("Contraseña actualizada ✓");
+      setNewPassword("");
+    } finally {
+      setPwLoading(false);
     }
   }
 
@@ -206,6 +232,38 @@ function EditBalance({ employee }: { employee: Employee }) {
             </Button>
           </DialogFooter>
         </form>
+
+        <div className="mt-6 border-t border-border pt-4">
+          <h3 className="font-display text-sm font-semibold">
+            Cambiar contraseña
+          </h3>
+          <p className="mb-3 text-xs text-ink-muted">
+            Útil si el empleado la olvidó. Mínimo 8 caracteres.
+          </p>
+          <div className="flex items-end gap-2">
+            <div className="flex-1">
+              <Label htmlFor="newpw" className="sr-only">
+                Nueva contraseña
+              </Label>
+              <Input
+                id="newpw"
+                type="text"
+                placeholder="Nueva contraseña"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                minLength={8}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={changePassword}
+              disabled={pwLoading || newPassword.length < 8}
+            >
+              {pwLoading ? "…" : "Cambiar"}
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

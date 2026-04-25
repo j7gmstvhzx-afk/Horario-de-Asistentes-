@@ -70,10 +70,10 @@ model Shift {
   id         String     @id @default(cuid())
   userId     String
   date       DateTime   @db.Date
-  startTime  DateTime
-  endTime    DateTime
-  lunchStart DateTime?
-  lunchEnd   DateTime?
+  startTime  String     // "HH:mm" 24h, local Casino time
+  endTime    String     // "HH:mm" 24h, local Casino time. May be < startTime when crossing midnight.
+  lunchStart String?    // "HH:mm" or null
+  lunchEnd   String?    // "HH:mm" or null
   breakType  BreakType  @default(NONE)
   notes      String?
   version    Int        @default(1)
