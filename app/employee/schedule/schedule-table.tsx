@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { fromDateString } from "@/lib/dates";
 import { formatHM12, formatRangeHM12 } from "@/lib/time-format";
+import { celebrate } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 
 type ShiftRow = {
@@ -51,6 +52,7 @@ export function ScheduleList({ shifts }: { shifts: ShiftRow[] }) {
         return;
       }
       toast.success("Horario firmado ✓");
+      celebrate();
       startTransition(() => router.refresh());
     } finally {
       setPending(null);

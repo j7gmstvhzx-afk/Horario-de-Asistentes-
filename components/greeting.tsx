@@ -11,11 +11,15 @@ export function Greeting({ name }: { name: string }) {
   }
   const firstName = name.split(" ")[0] ?? name;
   return (
-    <div className="flex flex-col">
-      <h1 className="font-display text-3xl font-bold leading-tight text-white">
-        {text}, {firstName} <span aria-hidden>{emoji}</span>
+    <div className="flex flex-col gap-1">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/75">
+        Casino Atlántico Manatí
+      </p>
+      <h1 className="font-display text-[34px] sm:text-[40px] font-bold leading-[1.05] text-white">
+        {text},
+        <br />
+        {firstName} <span aria-hidden>{emoji}</span>
       </h1>
-      <p className="text-sm text-white/85">Casino Atlántico Manatí</p>
     </div>
   );
 }

@@ -27,7 +27,6 @@
     color: theme("colors.ink.DEFAULT");
   }
 
-  /* Bigger tap targets on mobile */
   button,
   [role="button"],
   a {
@@ -36,14 +35,23 @@
 }
 
 @layer components {
+  /* Liquid glass — iOS 26 style: heavier blur, slight saturation, inner highlight */
   .glass {
-    @apply backdrop-blur-md bg-white/70 border border-white/40;
+    @apply backdrop-blur-xl bg-white/65 border border-white/60;
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
   }
 
   .glass-card {
-    @apply rounded-3xl backdrop-blur-md bg-white/80 border border-white/50 shadow-card;
+    @apply rounded-3xl backdrop-blur-xl bg-white/75 border border-white/60 shadow-soft;
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    box-shadow:
+      0 8px 24px -8px rgba(30, 49, 74, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7);
   }
 
+  /* Static blue gradient (used as fallback or for non-animated sections) */
   .gradient-bg {
     background: linear-gradient(
       135deg,
@@ -59,6 +67,51 @@
       theme("colors.brand.100") 0%,
       theme("colors.surface.DEFAULT") 60%
     );
+  }
+
+  /* Animated mesh gradient — moving blue/violet/peach blobs for hero areas */
+  .mesh-bg {
+    position: relative;
+    background:
+      radial-gradient(at 20% 30%, theme("colors.brand.500") 0%, transparent 55%),
+      radial-gradient(at 80% 20%, #6f8fc4 0%, transparent 55%),
+      radial-gradient(at 70% 80%, #f9a98a 0%, transparent 55%),
+      radial-gradient(at 30% 90%, #8fb3df 0%, transparent 55%),
+      linear-gradient(135deg, theme("colors.brand.500") 0%, theme("colors.brand.400") 100%);
+    background-size: 200% 200%;
+    animation: mesh-pan 18s ease-in-out infinite;
+  }
+
+  @keyframes mesh-pan {
+    0%, 100% {
+      background-position:
+        0% 0%,
+        100% 0%,
+        80% 100%,
+        20% 80%,
+        0% 0%;
+    }
+    50% {
+      background-position:
+        20% 30%,
+        70% 30%,
+        60% 60%,
+        40% 50%,
+        100% 100%;
+    }
+  }
+
+  .mesh-bg::after {
+    /* Subtle vignette + grain feel */
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at 50% 0%,
+      transparent 0%,
+      rgba(0, 0, 0, 0.08) 100%
+    );
+    pointer-events: none;
   }
 
   .card {
@@ -77,7 +130,6 @@
     @apply inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700;
   }
 
-  /* Safe area padding for iOS devices with notches / home indicator */
   .safe-top {
     padding-top: env(safe-area-inset-top);
   }
@@ -85,8 +137,19 @@
     padding-bottom: calc(env(safe-area-inset-bottom) + 0.5rem);
   }
 
-  /* Bottom nav spacer — pushes content above the fixed tab bar */
   .pb-tabbar {
     padding-bottom: calc(5.5rem + env(safe-area-inset-bottom));
+  }
+
+  /* Section header pill, very faded */
+  .section-pill {
+    @apply inline-flex items-center rounded-full bg-white/40 backdrop-blur-md px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-muted;
+  }
+
+  /* Reduce motion respect */
+  @media (prefers-reduced-motion: reduce) {
+    .mesh-bg {
+      animation: none;
+    }
   }
 }

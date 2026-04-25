@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   Calendar,
   Coins,
@@ -44,7 +45,7 @@ export function BottomNav({ tabs }: { tabs: TabItem[] }) {
   return (
     <nav
       aria-label="Navegación principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-white/40 bg-white/85 backdrop-blur-md safe-bottom"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-white/40 bg-white/85 backdrop-blur-xl safe-bottom"
     >
       <ul className="mx-auto flex max-w-2xl items-stretch justify-around px-2 pt-1.5">
         {tabs.map((tab) => {
@@ -58,19 +59,26 @@ export function BottomNav({ tabs }: { tabs: TabItem[] }) {
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-14 flex-col items-center justify-center gap-0.5 rounded-2xl px-2 transition-colors",
-                  active
-                    ? "text-brand-700"
-                    : "text-ink-muted hover:text-brand-600",
+                  "relative flex h-14 flex-col items-center justify-center gap-0.5 rounded-2xl px-2 transition-colors active:scale-[0.96]",
+                  active ? "text-brand-700" : "text-ink-muted hover:text-brand-600",
                 )}
               >
-                <span
-                  className={cn(
-                    "flex h-8 w-8 items-center justify-center rounded-full transition-all",
-                    active ? "bg-brand-100 shadow-sm" : "",
+                <span className="relative flex h-8 w-8 items-center justify-center rounded-full">
+                  {active && (
+                    <motion.span
+                      layoutId="bottom-nav-active"
+                      className="absolute inset-0 rounded-full bg-brand-100 shadow-sm"
+                      transition={{
+                        type: "spring",
+                        stiffness: 380,
+                        damping: 30,
+                      }}
+                    />
                   )}
-                >
-                  <Icon className="h-5 w-5" strokeWidth={active ? 2.4 : 2} />
+                  <Icon
+                    className="relative h-5 w-5"
+                    strokeWidth={active ? 2.4 : 2}
+                  />
                 </span>
                 <span
                   className={cn(

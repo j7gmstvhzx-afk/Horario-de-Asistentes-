@@ -143,10 +143,26 @@ function TodayShiftCard({
   const isBreak = shift.breakType !== "NONE";
   return (
     <GlassCard className="p-5">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider text-brand-600">
-          Tu turno de hoy
-        </p>
+      <div className="mb-4 flex items-start gap-4">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-glow">
+          <Clock className="h-6 w-6" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
+            Tu turno de hoy
+          </p>
+          <p className="font-display text-[28px] font-bold leading-tight text-ink">
+            {formatRangeHM12(shift.startTime, shift.endTime)}
+          </p>
+          {shift.lunchStart && shift.lunchEnd && (
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
+              <Coffee className="h-3.5 w-3.5" />
+              Break {formatRangeHM12(shift.lunchStart, shift.lunchEnd)}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
         {isBreak ? (
           <Badge
             variant={
@@ -174,24 +190,15 @@ function TodayShiftCard({
             Sin firmar
           </Badge>
         )}
+        {!signed && !isBreak && (
+          <Link
+            href="/employee/schedule"
+            className="ml-auto inline-flex h-10 items-center justify-center rounded-xl bg-brand-500 px-4 text-sm font-medium text-white shadow-card transition-all hover:bg-brand-600 active:scale-[0.98]"
+          >
+            Firmar turno
+          </Link>
+        )}
       </div>
-      <p className="font-display text-3xl font-bold text-ink">
-        {formatRangeHM12(shift.startTime, shift.endTime)}
-      </p>
-      {shift.lunchStart && shift.lunchEnd && (
-        <p className="mt-2 flex items-center gap-2 text-sm text-ink-muted">
-          <Coffee className="h-4 w-4" />
-          Break {formatRangeHM12(shift.lunchStart, shift.lunchEnd)}
-        </p>
-      )}
-      {!signed && !isBreak && (
-        <Link
-          href="/employee/schedule"
-          className="mt-4 inline-flex h-10 items-center justify-center rounded-xl bg-brand-500 px-4 text-sm font-medium text-white shadow-card transition-all hover:bg-brand-600 active:scale-[0.98]"
-        >
-          Firmar turno
-        </Link>
-      )}
     </GlassCard>
   );
 }
