@@ -2,18 +2,16 @@ import Link from "next/link";
 import { ChevronLeft, Clock, Coffee, Coins } from "lucide-react";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { fromDateString, formatDateLongWithYear } from "@/lib/dates";
+import { fromDateString, formatDateLongWithYear, weekStart } from "@/lib/dates";
 import {
   formatHM12,
   formatRangeHM12,
   breakTypeLabel,
   breakTypeEmoji,
 } from "@/lib/time-format";
-import { calculateTips } from "@/lib/tips";
-import { weekStart } from "@/lib/dates";
 import { SimpleHeader } from "@/components/page-header";
 import { Badge } from "@/components/ui/badge";
-import { formatMoney, formatHours } from "@/lib/utils";
+import { formatMoney } from "@/lib/utils";
 
 const HM_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -41,52 +39,14 @@ export default async function DayDetailPage({
     }),
     prisma.tipReport.findFirst({
       where: { weekStart: weekStart(dateObj) },
-      include: { dailyTips: true, hoursEntries: { include: { user: true } } },
+      include: { dailyTips: true },
     }),
   ]);
 
-  // Total tip generated that day (raw daily total, not just my share).
+  // Total tip generated that day (raw daily total).
   const dailyTipTotal = weekReport?.dailyTips.find(
     (d) => d.date.toISOString().slice(0, 10) === date,
   );
-
-  // My share for that day, if I'm a Slot Attendant in this report.
-  let myDayShare: number | null = null;
-  let myDayHours: number | null = null;
-  if (weekReport) {
-    const employees = Array.from(
-      new Map(
-        weekReport.hoursEntries.map((h) => [
-          h.userId,
-          {
-            userId: h.userId,
-            fullName: h.user.fullName,
-            hours: {} as Record<string, number>,
-          },
-        ]),
-      ).values(),
-    );
-    for (const h of weekReport.hoursEntries) {
-      const e = employees.find((x) => x.userId === h.userId);
-      if (e) e.hours[h.date.toISOString().slice(0, 10)] = Number(h.hours);
-    }
-    const dailyTips: Record<string, number> = {};
-    for (const dt of weekReport.dailyTips) {
-      dailyTips[dt.date.toISOString().slice(0, 10)] = Number(dt.totalTip);
-    }
-    const calc = calculateTips({
-      employees,
-      dailyTips,
-      hourlyRate: Number(weekReport.hourlyRate),
-    });
-    const meRow = calc.perEmployee.find((e) => e.userId === session.userId);
-    if (meRow) {
-      const hoursThatDay =
-        employees.find((e) => e.userId === session.userId)?.hours[date] ?? 0;
-      myDayHours = hoursThatDay;
-      myDayShare = hoursThatDay * calc.tipPerHour;
-    }
-  }
 
   const breakType = shift?.breakType ?? "NONE";
 
@@ -144,9 +104,9 @@ export default async function DayDetailPage({
         </section>
 
         {/* Tips that day */}
-        {(dailyTipTotal || myDayShare !== null) && (
+        {dailyTipTotal && (
           <section className="rounded-3xl border border-border bg-surface-raised p-5 shadow-card">
-            <div className="mb-3 flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent text-brand-700">
                 <Coins className="h-5 w-5" />
               </span>
@@ -155,33 +115,13 @@ export default async function DayDetailPage({
                   Propinas del día
                 </p>
                 <p className="font-display text-xl font-bold leading-tight">
-                  {formatMoney(Number(dailyTipTotal?.totalTip ?? 0))}
+                  {formatMoney(Number(dailyTipTotal.totalTip))}
                 </p>
                 <p className="text-xs text-ink-muted">
                   Total generado por todos los Slot Attendants
                 </p>
               </div>
             </div>
-            {myDayShare !== null && myDayHours !== null && myDayHours > 0 && (
-              <div className="mt-3 grid grid-cols-2 gap-3 rounded-2xl bg-brand-50 p-3">
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-muted">
-                    Tus horas
-                  </p>
-                  <p className="font-display text-base font-bold">
-                    {formatHours(myDayHours)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-muted">
-                    Tu parte
-                  </p>
-                  <p className="font-display text-base font-bold text-brand-700">
-                    {formatMoney(myDayShare)}
-                  </p>
-                </div>
-              </div>
-            )}
           </section>
         )}
       </main>
