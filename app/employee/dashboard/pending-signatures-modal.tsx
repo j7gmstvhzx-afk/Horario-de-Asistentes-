@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { fromDateString, isNextWeek, isThisWeek } from "@/lib/dates";
 import { formatHM12 } from "@/lib/time-format";
+import { celebrate } from "@/lib/confetti";
 
 type PendingShift = {
   id: string;
@@ -54,6 +55,7 @@ export function PendingSignaturesModal({
     const failed = results.filter((r: { ok: boolean }) => !r.ok);
     if (failed.length === 0) {
       toast.success("Todos los horarios firmados ✓");
+      celebrate();
       setOpen(false);
       router.refresh();
     } else {

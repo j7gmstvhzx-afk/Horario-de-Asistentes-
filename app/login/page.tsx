@@ -17,8 +17,8 @@ export default async function LoginPage({
 
   const params = await searchParams;
   return (
-    <main className="min-h-screen gradient-bg flex items-start sm:items-center justify-center px-4 py-10 safe-top safe-bottom">
-      <div className="w-full max-w-md">
+    <main className="min-h-screen mesh-bg relative overflow-hidden flex items-start sm:items-center justify-center px-4 py-10 safe-top safe-bottom">
+      <div className="relative z-10 w-full max-w-md">
         <div className="mb-8 flex flex-col items-center gap-3 text-center text-white">
           <LogoMark size={88} className="drop-shadow-lg" />
           <div>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { celebrate } from "@/lib/confetti";
 
 export function RequestActions({ id }: { id: string }) {
   const router = useRouter();
@@ -26,6 +27,7 @@ export function RequestActions({ id }: { id: string }) {
       toast.success(
         decision === "APPROVED" ? "Solicitud aprobada ✓" : "Solicitud rechazada",
       );
+      if (decision === "APPROVED") celebrate();
       router.refresh();
     } finally {
       setLoading(null);

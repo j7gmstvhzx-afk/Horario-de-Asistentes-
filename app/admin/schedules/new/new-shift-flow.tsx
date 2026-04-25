@@ -17,6 +17,7 @@ import {
 import { StepIndicator } from "@/components/step-indicator";
 import { MonthCalendar } from "@/components/month-calendar";
 import { addMinutesHM, formatHM12 } from "@/lib/time-format";
+import { celebrate } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 
 const SHIFT_MINUTES = 8 * 60 + 30; // 8h 30min total (8h work + 30min break)
@@ -112,6 +113,7 @@ export function NewShiftFlow({ employees }: { employees: Employee[] }) {
         return;
       }
       toast.success(`${body.data.created} turno(s) creado(s) ✓`);
+      celebrate();
       router.push("/admin/schedules");
       router.refresh();
     } finally {
