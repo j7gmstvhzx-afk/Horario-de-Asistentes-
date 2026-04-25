@@ -115,23 +115,27 @@ export default async function AdminDashboard() {
               icon={<Calendar className="h-5 w-5" />}
               label="Turnos 2 semanas"
               value={shifts.length}
+              href="/admin/schedules"
             />
             <StatCard
               icon={<ClipboardList className="h-5 w-5" />}
               label="Sin firmar"
               value={pendingSignaturesCount}
               tone={pendingSignaturesCount > 0 ? "warning" : "success"}
+              href="/admin/schedules"
             />
             <StatCard
               icon={<Users className="h-5 w-5" />}
               label="Empleados"
               value={employeeCount}
+              href="/admin/employees"
             />
             <StatCard
               icon={<ClipboardList className="h-5 w-5" />}
               label="Solicitudes"
               value={pendingPto}
               tone={pendingPto > 0 ? "warning" : "default"}
+              href="/admin/requests"
             />
           </div>
 

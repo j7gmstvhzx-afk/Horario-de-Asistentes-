@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { detectBreakConflicts } from "@/lib/conflicts";
 import { fromDateString, formatWeekday } from "@/lib/dates";
-import { formatTime, formatTimeRange } from "@/lib/time-format";
+import { formatHM12, formatRangeHM12 } from "@/lib/time-format";
 import { cn } from "@/lib/utils";
 
 type Employee = {
@@ -65,8 +65,8 @@ export function SchedulesList({
           userId: s.userId,
           userName: s.userName,
           date: fromDateString(s.date),
-          lunchStart: s.lunchStart ? new Date(s.lunchStart) : null,
-          lunchEnd: s.lunchEnd ? new Date(s.lunchEnd) : null,
+          lunchStart: s.lunchStart,
+          lunchEnd: s.lunchEnd,
         })),
       ),
     [shifts],
@@ -179,7 +179,7 @@ export function SchedulesList({
                               {s.userName}
                             </p>
                             <p className="text-sm text-ink">
-                              {formatTimeRange(s.startTime, s.endTime)}
+                              {formatRangeHM12(s.startTime, s.endTime)}
                             </p>
                             {s.lunchStart && s.lunchEnd && (
                               <p
@@ -191,8 +191,8 @@ export function SchedulesList({
                                 )}
                               >
                                 <Coffee className="h-3 w-3" />
-                                Break {formatTime(s.lunchStart)} –{" "}
-                                {formatTime(s.lunchEnd)}
+                                Break {formatHM12(s.lunchStart)} –{" "}
+                                {formatHM12(s.lunchEnd)}
                               </p>
                             )}
                             <div className="mt-1.5 flex flex-wrap gap-1">

@@ -1,20 +1,19 @@
 /**
- * Conflict detection for schedules.
+ * Break conflict detection. In a casino, multiple employees working same
+ * shift is fine; ONLY overlapping breaks need to alert.
  *
- * IMPORTANT: In a casino, multiple employees working at the same time is
- * normal and expected. The ONLY real conflict is when two employees take
- * their break/lunch at the same time, because the floor cannot be unattended.
- *
- * So we ONLY detect overlap on lunch windows. Shift windows are not checked.
+ * Times are HH:mm strings (Casino local). End may be < start when crossing
+ * midnight; helpers in lib/time-format handle that.
  */
+import { rangesOverlapHM } from "./time-format";
 
 export type ShiftWindow = {
   id: string;
   userId: string;
   userName: string;
   date: Date;
-  lunchStart: Date | null;
-  lunchEnd: Date | null;
+  lunchStart: string | null;
+  lunchEnd: string | null;
 };
 
 export type BreakConflict = {
@@ -32,19 +31,6 @@ function sameDay(a: Date, b: Date): boolean {
   );
 }
 
-function overlaps(
-  aStart: Date,
-  aEnd: Date,
-  bStart: Date,
-  bEnd: Date,
-): boolean {
-  return aStart < bEnd && bStart < aEnd;
-}
-
-/**
- * Returns pairs of shifts whose break/lunch windows overlap on the same day.
- * Shifts without a defined lunch window are skipped.
- */
 export function detectBreakConflicts(
   shifts: readonly ShiftWindow[],
 ): BreakConflict[] {
@@ -58,7 +44,7 @@ export function detectBreakConflicts(
       if (!sameDay(a.date, b.date)) continue;
       if (!a.lunchStart || !a.lunchEnd || !b.lunchStart || !b.lunchEnd) continue;
 
-      if (overlaps(a.lunchStart, a.lunchEnd, b.lunchStart, b.lunchEnd)) {
+      if (rangesOverlapHM(a.lunchStart, a.lunchEnd, b.lunchStart, b.lunchEnd)) {
         conflicts.push({
           date: a.date,
           a: { id: a.id, userName: a.userName },

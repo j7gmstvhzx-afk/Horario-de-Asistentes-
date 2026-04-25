@@ -14,93 +14,47 @@ function mk(
 }
 
 describe("detectBreakConflicts", () => {
-  it("does NOT alert when two employees work overlapping shifts without lunch overlap", () => {
-    // Two employees both working 8am-4pm simultaneously — totally fine.
+  it("does NOT alert on overlapping work windows when lunches don't overlap", () => {
     const conflicts = detectBreakConflicts([
-      mk({
-        id: "1",
-        userId: "a",
-        lunchStart: new Date("2026-04-20T12:00:00"),
-        lunchEnd: new Date("2026-04-20T12:30:00"),
-      }),
-      mk({
-        id: "2",
-        userId: "b",
-        lunchStart: new Date("2026-04-20T13:00:00"),
-        lunchEnd: new Date("2026-04-20T13:30:00"),
-      }),
+      mk({ id: "1", userId: "a", lunchStart: "12:00", lunchEnd: "12:30" }),
+      mk({ id: "2", userId: "b", lunchStart: "13:00", lunchEnd: "13:30" }),
     ]);
     expect(conflicts).toHaveLength(0);
   });
 
-  it("alerts when two employees have overlapping lunch windows", () => {
+  it("alerts on overlapping lunch windows", () => {
     const conflicts = detectBreakConflicts([
-      mk({
-        id: "1",
-        userId: "a",
-        lunchStart: new Date("2026-04-20T12:00:00"),
-        lunchEnd: new Date("2026-04-20T12:30:00"),
-      }),
-      mk({
-        id: "2",
-        userId: "b",
-        lunchStart: new Date("2026-04-20T12:15:00"),
-        lunchEnd: new Date("2026-04-20T12:45:00"),
-      }),
+      mk({ id: "1", userId: "a", lunchStart: "12:00", lunchEnd: "12:30" }),
+      mk({ id: "2", userId: "b", lunchStart: "12:15", lunchEnd: "12:45" }),
     ]);
     expect(conflicts).toHaveLength(1);
   });
 
   it("does not report if either shift has no lunch window", () => {
     const conflicts = detectBreakConflicts([
-      mk({
-        id: "1",
-        userId: "a",
-        lunchStart: new Date("2026-04-20T12:00:00"),
-        lunchEnd: new Date("2026-04-20T12:30:00"),
-      }),
-      mk({
-        id: "2",
-        userId: "b",
-        lunchStart: null,
-        lunchEnd: null,
-      }),
+      mk({ id: "1", userId: "a", lunchStart: "12:00", lunchEnd: "12:30" }),
+      mk({ id: "2", userId: "b" }),
     ]);
     expect(conflicts).toHaveLength(0);
   });
 
   it("does not report same user", () => {
     const conflicts = detectBreakConflicts([
-      mk({
-        id: "1",
-        userId: "a",
-        lunchStart: new Date("2026-04-20T12:00:00"),
-        lunchEnd: new Date("2026-04-20T12:30:00"),
-      }),
-      mk({
-        id: "2",
-        userId: "a",
-        lunchStart: new Date("2026-04-20T12:15:00"),
-        lunchEnd: new Date("2026-04-20T12:45:00"),
-      }),
+      mk({ id: "1", userId: "a", lunchStart: "12:00", lunchEnd: "12:30" }),
+      mk({ id: "2", userId: "a", lunchStart: "12:15", lunchEnd: "12:45" }),
     ]);
     expect(conflicts).toHaveLength(0);
   });
 
   it("does not report across different days", () => {
     const conflicts = detectBreakConflicts([
-      mk({
-        id: "1",
-        userId: "a",
-        lunchStart: new Date("2026-04-20T12:00:00"),
-        lunchEnd: new Date("2026-04-20T12:30:00"),
-      }),
+      mk({ id: "1", userId: "a", lunchStart: "12:00", lunchEnd: "12:30" }),
       mk({
         id: "2",
         userId: "b",
         date: new Date("2026-04-21T12:00:00"),
-        lunchStart: new Date("2026-04-21T12:00:00"),
-        lunchEnd: new Date("2026-04-21T12:30:00"),
+        lunchStart: "12:00",
+        lunchEnd: "12:30",
       }),
     ]);
     expect(conflicts).toHaveLength(0);

@@ -30,38 +30,69 @@ type Props = {
   preparedBy: string;
 };
 
+// Inputs are stored as strings so users can clear the field and type freely
+// without React re-injecting "0". Only converted to number for calculations.
+type EmployeeStr = {
+  userId: string;
+  fullName: string;
+  hours: Record<string, string>;
+};
+
+function toStrMap(m: Record<string, number>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(m)) out[k] = v ? String(v) : "";
+  return out;
+}
+function toNumMap(m: Record<string, string>): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const [k, v] of Object.entries(m)) {
+    const n = Number(v);
+    out[k] = Number.isFinite(n) ? n : 0;
+  }
+  return out;
+}
+
 export function TipsEditor(props: Props) {
   const router = useRouter();
-  const [employees, setEmployees] = useState(props.employees);
-  const [dailyTips, setDailyTips] = useState(props.dailyTips);
-  const [hourlyRate, setHourlyRate] = useState(props.hourlyRate);
+  const [employees, setEmployees] = useState<EmployeeStr[]>(() =>
+    props.employees.map((e) => ({
+      userId: e.userId,
+      fullName: e.fullName,
+      hours: toStrMap(e.hours),
+    })),
+  );
+  const [dailyTips, setDailyTips] = useState<Record<string, string>>(() =>
+    toStrMap(props.dailyTips),
+  );
+  const [hourlyRate, setHourlyRate] = useState(String(props.hourlyRate));
   const [saving, setSaving] = useState(false);
 
   const calc = useMemo(
-    () => calculateTips({ employees, dailyTips, hourlyRate }),
+    () =>
+      calculateTips({
+        employees: employees.map((e) => ({
+          userId: e.userId,
+          fullName: e.fullName,
+          hours: toNumMap(e.hours),
+        })),
+        dailyTips: toNumMap(dailyTips),
+        hourlyRate: Number(hourlyRate) || 0,
+      }),
     [employees, dailyTips, hourlyRate],
   );
 
   function updateHours(userId: string, dayKey: string, value: string) {
-    const n = value === "" ? 0 : Number(value);
     setEmployees((prev) =>
       prev.map((e) =>
         e.userId === userId
-          ? {
-              ...e,
-              hours: {
-                ...e.hours,
-                [dayKey]: Number.isFinite(n) ? n : 0,
-              },
-            }
+          ? { ...e, hours: { ...e.hours, [dayKey]: value } }
           : e,
       ),
     );
   }
 
   function updateDailyTip(dayKey: string, value: string) {
-    const n = value === "" ? 0 : Number(value);
-    setDailyTips((prev) => ({ ...prev, [dayKey]: Number.isFinite(n) ? n : 0 }));
+    setDailyTips((prev) => ({ ...prev, [dayKey]: value }));
   }
 
   async function save() {
@@ -73,13 +104,13 @@ export function TipsEditor(props: Props) {
         body: JSON.stringify({
           weekStart: props.weekStartStr,
           weekEnd: props.weekEndStr,
-          hourlyRate,
+          hourlyRate: Number(hourlyRate) || 0,
           preparedBy: props.preparedBy,
           employees: employees.map((e) => ({
             userId: e.userId,
-            hours: e.hours,
+            hours: toNumMap(e.hours),
           })),
-          dailyTips,
+          dailyTips: toNumMap(dailyTips),
         }),
       });
       const body = await res.json();
@@ -155,7 +186,7 @@ export function TipsEditor(props: Props) {
           icon={<Coins className="h-5 w-5" />}
           label="Pago Total / Hora"
           value={formatMoney(calc.payPerHour)}
-          hint={`Rate ${formatMoney(hourlyRate)} + propinas`}
+          hint={`Rate ${formatMoney(Number(hourlyRate) || 0)} + propinas`}
         />
       </div>
 
@@ -191,7 +222,7 @@ export function TipsEditor(props: Props) {
             <tbody>
               {employees.map((emp) => {
                 const total = props.days.reduce(
-                  (acc, k) => acc + (emp.hours[k] ?? 0),
+                  (acc, k) => acc + (Number(emp.hours[k]) || 0),
                   0,
                 );
                 return (
@@ -210,7 +241,9 @@ export function TipsEditor(props: Props) {
                           min="0"
                           step="0.5"
                           className="h-9 w-14 text-center px-1"
-                          value={emp.hours[k] ?? 0}
+                          value={emp.hours[k] ?? ""}
+                          onFocus={(e) => e.target.select()}
+                          placeholder="0"
                           onChange={(e) =>
                             updateHours(emp.userId, k, e.target.value)
                           }
@@ -229,7 +262,7 @@ export function TipsEditor(props: Props) {
                 </td>
                 {props.days.map((k) => {
                   const total = employees.reduce(
-                    (acc, e) => acc + (e.hours[k] ?? 0),
+                    (acc, e) => acc + (Number(e.hours[k]) || 0),
                     0,
                   );
                   return (
@@ -274,7 +307,9 @@ export function TipsEditor(props: Props) {
                     min="0"
                     step="0.01"
                     className="h-9 flex-1 px-1 text-right font-semibold"
-                    value={dailyTips[d] ?? 0}
+                    value={dailyTips[d] ?? ""}
+                    onFocus={(e) => e.target.select()}
+                    placeholder="0"
                     onChange={(e) => updateDailyTip(d, e.target.value)}
                   />
                 </div>
@@ -305,7 +340,8 @@ export function TipsEditor(props: Props) {
               inputMode="decimal"
               className="h-10 w-24 text-right"
               value={hourlyRate}
-              onChange={(e) => setHourlyRate(Number(e.target.value))}
+              onChange={(e) => setHourlyRate(e.target.value)}
+              onFocus={(e) => e.target.select()}
             />
           </div>
         </div>

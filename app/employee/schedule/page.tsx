@@ -21,19 +21,16 @@ export default async function EmployeeSchedulePage() {
 
   return (
     <>
-      <SimpleHeader
-        title="Mis Horarios"
-        subtitle="Revisa y firma tus turnos"
-      />
+      <SimpleHeader title="Mis Horarios" subtitle="Revisa y firma tus turnos" />
       <main className="mx-auto max-w-2xl px-4 py-5 sm:px-5">
         <ScheduleList
           shifts={shifts.map((s) => ({
             id: s.id,
             date: toDateString(s.date),
-            startTime: s.startTime.toISOString(),
-            endTime: s.endTime.toISOString(),
-            lunchStart: s.lunchStart?.toISOString() ?? null,
-            lunchEnd: s.lunchEnd?.toISOString() ?? null,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            lunchStart: s.lunchStart,
+            lunchEnd: s.lunchEnd,
             breakType: s.breakType,
             notes: s.notes,
             signed: Boolean(s.signature),
