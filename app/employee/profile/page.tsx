@@ -16,10 +16,11 @@ export default async function EmployeeProfilePage() {
     where: { id: session.userId },
   });
 
-  const startRange = weekStart(addWeeks(new Date(), -8));
+  // Fetch up to last 12 months for monthly history.
+  const oneYearAgo = weekStart(addWeeks(new Date(), -52));
   const reports = await prisma.tipReport.findMany({
     where: {
-      weekStart: { gte: startRange },
+      weekStart: { gte: oneYearAgo },
       hoursEntries: { some: { userId: user.id } },
     },
     include: {
@@ -29,7 +30,7 @@ export default async function EmployeeProfilePage() {
     orderBy: { weekStart: "desc" },
   });
 
-  const weeklyBreakdown = reports.map((report) => {
+  const allWeeks = reports.map((report) => {
     const dailyTips: Record<string, number> = {};
     for (const dt of report.dailyTips) {
       dailyTips[dt.date.toISOString().slice(0, 10)] = Number(dt.totalTip);
@@ -65,6 +66,45 @@ export default async function EmployeeProfilePage() {
       total: mine?.totalComp ?? 0,
     };
   });
+
+  // Last 4 weeks detailed.
+  const weeklyBreakdown = allWeeks.slice(0, 4);
+
+  // Older weeks aggregated by month YYYY-MM.
+  const olderWeeks = allWeeks.slice(4);
+  const monthlyMap = new Map<
+    string,
+    { year: number; month: number; tip: number; total: number; hours: number }
+  >();
+  for (const w of olderWeeks) {
+    const key = `${w.weekStart.getFullYear()}-${String(w.weekStart.getMonth() + 1).padStart(2, "0")}`;
+    const prev = monthlyMap.get(key);
+    if (prev) {
+      prev.tip += w.tip;
+      prev.total += w.total;
+      prev.hours += w.hours;
+    } else {
+      monthlyMap.set(key, {
+        year: w.weekStart.getFullYear(),
+        month: w.weekStart.getMonth(),
+        tip: w.tip,
+        total: w.total,
+        hours: w.hours,
+      });
+    }
+  }
+  const monthlyHistory = Array.from(monthlyMap.values()).sort(
+    (a, b) => b.year * 12 + b.month - (a.year * 12 + a.month),
+  );
+
+  const monthLabel = (year: number, month: number) => {
+    const d = new Date(year, month, 1);
+    const s = d.toLocaleDateString("es-ES", {
+      month: "long",
+      year: "numeric",
+    });
+    return s.replace(/^./, (c) => c.toUpperCase());
+  };
 
   const initials = user.fullName
     .split(" ")
@@ -135,43 +175,82 @@ export default async function EmployeeProfilePage() {
           </div>
 
           {user.position === "SLOT_ATTENDANT" && (
-            <div className="rounded-2xl border border-border bg-surface-raised p-5 shadow-card">
-              <h3 className="font-display text-base font-semibold">Mis Propinas</h3>
-              <p className="mt-0.5 text-xs text-ink-muted">
-                Últimas 8 semanas.
-              </p>
-              {weeklyBreakdown.length === 0 ? (
-                <p className="mt-6 text-center text-sm text-ink-muted">
-                  Aún no hay reportes de propinas.
-                </p>
-              ) : (
-                <ul className="mt-4 flex flex-col divide-y divide-border">
-                  {weeklyBreakdown.map((w) => (
-                    <li
-                      key={w.weekStart.toISOString()}
-                      className="flex items-center justify-between gap-3 py-3"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">
-                          Semana del{" "}
-                          {w.weekStart.toLocaleDateString("es-ES", {
-                            day: "2-digit",
-                            month: "short",
-                          })}
+            <>
+              <div className="rounded-2xl border border-border bg-surface-raised p-5 shadow-card">
+                <h3 className="font-display text-base font-semibold">
+                  Mis Propinas — Últimas 4 semanas
+                </h3>
+                {weeklyBreakdown.length === 0 ? (
+                  <p className="mt-6 text-center text-sm text-ink-muted">
+                    Aún no hay reportes de propinas.
+                  </p>
+                ) : (
+                  <ul className="mt-4 flex flex-col divide-y divide-border">
+                    {weeklyBreakdown.map((w) => (
+                      <li
+                        key={w.weekStart.toISOString()}
+                        className="flex items-center justify-between gap-3 py-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium">
+                            {w.weekStart.toLocaleDateString("es-ES", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })}{" "}
+                            –{" "}
+                            {w.weekEnd.toLocaleDateString("es-ES", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </p>
+                          <p className="text-xs text-ink-muted">
+                            {formatHours(w.hours)} · Propina{" "}
+                            {formatMoney(w.tip)}
+                          </p>
+                        </div>
+                        <p className="font-display text-lg font-bold text-brand-700">
+                          {formatMoney(w.total)}
                         </p>
-                        <p className="text-xs text-ink-muted">
-                          {formatHours(w.hours)} · Propina{" "}
-                          {formatMoney(w.tip)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {monthlyHistory.length > 0 && (
+                <div className="rounded-2xl border border-border bg-surface-raised p-5 shadow-card">
+                  <h3 className="font-display text-base font-semibold">
+                    Histórico mensual
+                  </h3>
+                  <p className="mt-0.5 text-xs text-ink-muted">
+                    Totales de meses anteriores.
+                  </p>
+                  <ul className="mt-4 flex flex-col divide-y divide-border">
+                    {monthlyHistory.map((m) => (
+                      <li
+                        key={`${m.year}-${m.month}`}
+                        className="flex items-center justify-between gap-3 py-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium">
+                            {monthLabel(m.year, m.month)}
+                          </p>
+                          <p className="text-xs text-ink-muted">
+                            {formatHours(m.hours)} · Propina{" "}
+                            {formatMoney(m.tip)}
+                          </p>
+                        </div>
+                        <p className="font-display text-lg font-bold text-brand-700">
+                          {formatMoney(m.total)}
                         </p>
-                      </div>
-                      <p className="font-display text-lg font-bold text-brand-700">
-                        {formatMoney(w.total)}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
-            </div>
+            </>
           )}
 
           <LogoutButton variant="secondary" size="lg" className="w-full" />

@@ -21,9 +21,9 @@ import { celebrate } from "@/lib/confetti";
 type PendingShift = {
   id: string;
   date: string; // YYYY-MM-DD
-  startTime: string;
-  endTime: string;
-  breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL";
+  startTime: string | null;
+  endTime: string | null;
+  breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL" | "DAY_OFF";
 };
 
 export function PendingSignaturesModal({

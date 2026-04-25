@@ -15,8 +15,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { detectBreakConflicts } from "@/lib/conflicts";
-import { fromDateString, formatWeekday } from "@/lib/dates";
-import { formatHM12, formatRangeHM12 } from "@/lib/time-format";
+import { fromDateString, formatWeekday, formatRangeDesdeHasta } from "@/lib/dates";
+import {
+  formatHM12,
+  formatRangeHM12,
+  breakTypeLabel,
+  breakTypeEmoji,
+} from "@/lib/time-format";
+import { addWeeks } from "date-fns";
 import { cn } from "@/lib/utils";
 
 type Employee = {
@@ -30,11 +36,11 @@ type Shift = {
   userId: string;
   userName: string;
   date: string; // YYYY-MM-DD
-  startTime: string;
-  endTime: string;
+  startTime: string | null;
+  endTime: string | null;
   lunchStart: string | null;
   lunchEnd: string | null;
-  breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL";
+  breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL" | "DAY_OFF";
   notes: string | null;
   signed: boolean;
 };
@@ -90,11 +96,10 @@ export function SchedulesList({
     router.refresh();
   }
 
-  const weekLabel = fromDateString(weekStartStr).toLocaleDateString("es-ES", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  const weekStartDate = fromDateString(weekStartStr);
+  const weekEndDate = addWeeks(weekStartDate, 1);
+  weekEndDate.setDate(weekEndDate.getDate() - 1);
+  const weekLabel = formatRangeDesdeHasta(weekStartDate, weekEndDate);
 
   return (
     <div className="flex flex-col gap-4">
@@ -106,9 +111,11 @@ export function SchedulesList({
         </Link>
         <div className="text-center">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-ink-muted">
-            Semana del
+            Semana
           </p>
-          <p className="font-display text-sm font-bold">{weekLabel}</p>
+          <p className="font-display text-[11px] font-bold leading-tight">
+            {weekLabel}
+          </p>
         </div>
         <Link href={`?week=${encodeURIComponent(nextWeekStr)}`}>
           <Button variant="ghost" size="icon" aria-label="Semana siguiente">
@@ -179,40 +186,27 @@ export function SchedulesList({
                               {s.userName}
                             </p>
                             <p className="text-sm text-ink">
-                              {formatRangeHM12(s.startTime, s.endTime)}
+                              {s.breakType !== "NONE"
+                                ? `${breakTypeEmoji(s.breakType)} ${breakTypeLabel(s.breakType)}`
+                                : formatRangeHM12(s.startTime, s.endTime)}
                             </p>
-                            {s.lunchStart && s.lunchEnd && (
-                              <p
-                                className={cn(
-                                  "mt-0.5 flex items-center gap-1 text-xs",
-                                  isConflict
-                                    ? "text-danger-fg font-semibold"
-                                    : "text-ink-muted",
-                                )}
-                              >
-                                <Coffee className="h-3 w-3" />
-                                Break {formatHM12(s.lunchStart)} –{" "}
-                                {formatHM12(s.lunchEnd)}
-                              </p>
-                            )}
-                            <div className="mt-1.5 flex flex-wrap gap-1">
-                              {s.breakType !== "NONE" && (
-                                <Badge
-                                  variant={
-                                    s.breakType === "VACATION"
-                                      ? "success"
-                                      : s.breakType === "SICK"
-                                      ? "warning"
-                                      : "muted"
-                                  }
+                            {s.breakType === "NONE" &&
+                              s.lunchStart &&
+                              s.lunchEnd && (
+                                <p
+                                  className={cn(
+                                    "mt-0.5 flex items-center gap-1 text-xs",
+                                    isConflict
+                                      ? "text-danger-fg font-semibold"
+                                      : "text-ink-muted",
+                                  )}
                                 >
-                                  {s.breakType === "VACATION"
-                                    ? "Vacaciones"
-                                    : s.breakType === "SICK"
-                                    ? "Enfermedad"
-                                    : "Personal"}
-                                </Badge>
+                                  <Coffee className="h-3 w-3" />
+                                  Break {formatHM12(s.lunchStart)} –{" "}
+                                  {formatHM12(s.lunchEnd)}
+                                </p>
                               )}
+                            <div className="mt-1.5 flex flex-wrap gap-1">
                               {s.signed && (
                                 <Badge variant="success" className="gap-1">
                                   <Lock className="h-3 w-3" />

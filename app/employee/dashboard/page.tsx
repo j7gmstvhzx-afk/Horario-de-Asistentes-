@@ -4,7 +4,12 @@ import { addWeeks } from "date-fns";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { weekStart, weekEnd, toDateString } from "@/lib/dates";
-import { formatHM12, formatRangeHM12 } from "@/lib/time-format";
+import {
+  formatHM12,
+  formatRangeHM12,
+  breakTypeLabel,
+  breakTypeEmoji,
+} from "@/lib/time-format";
 import { PageHeader, PageContent } from "@/components/page-header";
 import { Greeting } from "@/components/greeting";
 import { GlassCard } from "@/components/glass-card";
@@ -45,7 +50,9 @@ export default async function EmployeeDashboard() {
     shiftsByDate.set(toDateString(s.date), s);
   }
   const shiftDates = new Set(shiftsByDate.keys());
-  const pending = shifts.filter((s) => !s.signature);
+  const pending = shifts.filter(
+    (s) => !s.signature && s.breakType === "NONE",
+  );
 
   return (
     <>
@@ -111,12 +118,12 @@ function TodayShiftCard({
 }: {
   shift:
     | {
-        startTime: string;
-        endTime: string;
+        startTime: string | null;
+        endTime: string | null;
         lunchStart: string | null;
         lunchEnd: string | null;
         signature: { signedAt: Date } | null;
-        breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL";
+        breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL" | "DAY_OFF";
       }
     | undefined;
   todayISO: string;
@@ -151,10 +158,16 @@ function TodayShiftCard({
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand-700">
             Tu turno de hoy
           </p>
-          <p className="font-display text-[28px] font-bold leading-tight text-ink">
-            {formatRangeHM12(shift.startTime, shift.endTime)}
-          </p>
-          {shift.lunchStart && shift.lunchEnd && (
+          {isBreak ? (
+            <p className="font-display text-[28px] font-bold leading-tight text-ink">
+              {breakTypeEmoji(shift.breakType)} {breakTypeLabel(shift.breakType)}
+            </p>
+          ) : (
+            <p className="font-display text-[28px] font-bold leading-tight text-ink">
+              {formatRangeHM12(shift.startTime, shift.endTime)}
+            </p>
+          )}
+          {!isBreak && shift.lunchStart && shift.lunchEnd && (
             <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
               <Coffee className="h-3.5 w-3.5" />
               Break {formatRangeHM12(shift.lunchStart, shift.lunchEnd)}
@@ -209,10 +222,10 @@ function UpcomingShifts({
   shifts: {
     id: string;
     date: string;
-    startTime: string;
-    endTime: string;
+    startTime: string | null;
+    endTime: string | null;
     signed: boolean;
-    breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL";
+    breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL" | "DAY_OFF";
   }[];
 }) {
   if (shifts.length === 0) return null;
@@ -254,7 +267,9 @@ function UpcomingShifts({
                   </p>
                   <p className="flex items-center gap-1 text-xs text-ink-muted">
                     <Clock className="h-3 w-3" />
-                    {formatHM12(s.startTime)} – {formatHM12(s.endTime)}
+                    {s.breakType !== "NONE"
+                      ? `${breakTypeEmoji(s.breakType)} ${breakTypeLabel(s.breakType)}`
+                      : `${formatHM12(s.startTime)} – ${formatHM12(s.endTime)}`}
                   </p>
                 </div>
                 {s.breakType !== "NONE" ? (
@@ -264,14 +279,12 @@ function UpcomingShifts({
                         ? "success"
                         : s.breakType === "SICK"
                         ? "warning"
+                        : s.breakType === "DAY_OFF"
+                        ? "default"
                         : "muted"
                     }
                   >
-                    {s.breakType === "VACATION"
-                      ? "Vac."
-                      : s.breakType === "SICK"
-                      ? "Enf."
-                      : "Pers."}
+                    {breakTypeLabel(s.breakType)}
                   </Badge>
                 ) : s.signed ? (
                   <Badge variant="success">Firmado</Badge>
