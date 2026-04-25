@@ -6,35 +6,40 @@ import { toast } from "sonner";
 import { CheckCircle2, Clock, Coffee, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { fromDateString } from "@/lib/dates";
-import { formatHM12, formatRangeHM12 } from "@/lib/time-format";
+import { fromDateString, formatDateLongWithYear } from "@/lib/dates";
+import {
+  formatHM12,
+  formatRangeHM12,
+  breakTypeLabel,
+  breakTypeEmoji,
+} from "@/lib/time-format";
 import { celebrate } from "@/lib/confetti";
 import { cn } from "@/lib/utils";
 
 type ShiftRow = {
   id: string;
   date: string;
-  startTime: string;
-  endTime: string;
+  startTime: string | null;
+  endTime: string | null;
   lunchStart: string | null;
   lunchEnd: string | null;
-  breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL";
+  breakType: "NONE" | "VACATION" | "SICK" | "PERSONAL" | "DAY_OFF";
   notes: string | null;
   signed: boolean;
   signedAt: string | null;
 };
 
-function breakLabel(breakType: ShiftRow["breakType"]) {
-  switch (breakType) {
-    case "VACATION":
-      return { label: "Vacaciones", variant: "success" as const };
-    case "SICK":
-      return { label: "Enfermedad", variant: "warning" as const };
-    case "PERSONAL":
-      return { label: "Personal", variant: "muted" as const };
-    default:
-      return null;
-  }
+function breakBadge(breakType: ShiftRow["breakType"]) {
+  if (breakType === "NONE") return null;
+  const variant: "success" | "warning" | "muted" | "default" =
+    breakType === "VACATION"
+      ? "success"
+      : breakType === "SICK"
+      ? "warning"
+      : breakType === "DAY_OFF"
+      ? "default"
+      : "muted";
+  return { label: breakTypeLabel(breakType), variant };
 }
 
 export function ScheduleList({ shifts }: { shifts: ShiftRow[] }) {
@@ -86,17 +91,11 @@ export function ScheduleList({ shifts }: { shifts: ShiftRow[] }) {
         return (
           <li key={date}>
             <h3 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider text-ink-muted">
-              {d
-                .toLocaleDateString("es-ES", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                })
-                .replace(/^\w/, (c) => c.toUpperCase())}
+              {formatDateLongWithYear(d)}
             </h3>
             <ul className="flex flex-col gap-2">
               {rows.map((s) => {
-                const brk = breakLabel(s.breakType);
+                const brk = breakBadge(s.breakType);
                 return (
                   <li
                     key={s.id}
@@ -110,9 +109,11 @@ export function ScheduleList({ shifts }: { shifts: ShiftRow[] }) {
                     <div className="flex items-center justify-between gap-3 p-4">
                       <div className="min-w-0 flex-1">
                         <p className="font-display text-base font-semibold">
-                          {formatRangeHM12(s.startTime, s.endTime)}
+                          {s.breakType !== "NONE"
+                            ? `${breakTypeEmoji(s.breakType)} ${breakTypeLabel(s.breakType)}`
+                            : formatRangeHM12(s.startTime, s.endTime)}
                         </p>
-                        {s.lunchStart && s.lunchEnd && (
+                        {s.breakType === "NONE" && s.lunchStart && s.lunchEnd && (
                           <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
                             <Coffee className="h-3.5 w-3.5" />
                             Break {formatHM12(s.lunchStart)} –{" "}

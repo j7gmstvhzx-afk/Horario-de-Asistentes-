@@ -36,6 +36,7 @@ export default async function AdminDashboard() {
         where: {
           date: { gte: start, lte: end },
           signature: { is: null },
+          breakType: "NONE",
         },
       }),
     ]);

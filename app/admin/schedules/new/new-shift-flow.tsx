@@ -29,7 +29,7 @@ type Employee = {
   position: "SLOT_ATTENDANT" | "SUPERVISOR";
 };
 
-type BreakType = "NONE" | "VACATION" | "SICK" | "PERSONAL";
+type BreakType = "NONE" | "VACATION" | "SICK" | "PERSONAL" | "DAY_OFF";
 
 const STEPS = ["Días", "Empleados", "Horario"];
 
@@ -99,10 +99,10 @@ export function NewShiftFlow({ employees }: { employees: Employee[] }) {
         body: JSON.stringify({
           userIds: Array.from(selectedUsers),
           dates: Array.from(selectedDates),
-          startTime: start,
-          endTime: end,
-          lunchStart: lunchStart || null,
-          lunchEnd: lunchEnd || null,
+          startTime: breakType === "NONE" ? start : null,
+          endTime: breakType === "NONE" ? end : null,
+          lunchStart: breakType === "NONE" ? lunchStart || null : null,
+          lunchEnd: breakType === "NONE" ? lunchEnd || null : null,
           breakType,
           notes: notes || null,
         }),
@@ -219,58 +219,8 @@ export function NewShiftFlow({ employees }: { employees: Employee[] }) {
             Aplica a todos los turnos seleccionados.
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="start">Entrada</Label>
-              <Input
-                id="start"
-                type="time"
-                value={start}
-                onChange={(e) => onStartChange(e.target.value)}
-                required
-              />
-              <p className="text-xs text-ink-faint">{formatHM12(start)}</p>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="end">
-                Salida{" "}
-                <span className="text-ink-faint font-normal">
-                  · auto +8h30
-                </span>
-              </Label>
-              <Input
-                id="end"
-                type="time"
-                value={end}
-                onChange={(e) => setEnd(e.target.value)}
-                required
-              />
-              <p className="text-xs text-ink-faint">{formatHM12(end)}</p>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="lstart">Break inicio</Label>
-              <Input
-                id="lstart"
-                type="time"
-                value={lunchStart}
-                onChange={(e) => onLunchStartChange(e.target.value)}
-              />
-              <p className="text-xs text-ink-faint">{formatHM12(lunchStart)}</p>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="lend">
-                Break fin{" "}
-                <span className="text-ink-faint font-normal">· auto +30m</span>
-              </Label>
-              <Input
-                id="lend"
-                type="time"
-                value={lunchEnd}
-                onChange={(e) => setLunchEnd(e.target.value)}
-              />
-              <p className="text-xs text-ink-faint">{formatHM12(lunchEnd)}</p>
-            </div>
             <div className="flex flex-col gap-1.5 sm:col-span-2">
-              <Label>Tipo</Label>
+              <Label>Tipo de día</Label>
               <Select
                 value={breakType}
                 onValueChange={(v) => setBreakType(v as BreakType)}
@@ -280,12 +230,78 @@ export function NewShiftFlow({ employees }: { employees: Employee[] }) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="NONE">Turno normal</SelectItem>
-                  <SelectItem value="VACATION">Vacaciones</SelectItem>
-                  <SelectItem value="SICK">Enfermedad</SelectItem>
-                  <SelectItem value="PERSONAL">Personal</SelectItem>
+                  <SelectItem value="DAY_OFF">🌴 Día libre</SelectItem>
+                  <SelectItem value="VACATION">🏖️ Vacaciones</SelectItem>
+                  <SelectItem value="SICK">🤒 Enfermedad</SelectItem>
+                  <SelectItem value="PERSONAL">📌 Personal</SelectItem>
                 </SelectContent>
               </Select>
+              {breakType !== "NONE" && (
+                <p className="rounded-xl bg-brand-50 px-3 py-2 text-xs text-brand-700">
+                  No se requieren horas — el empleado no estará en propiedad ese
+                  día.
+                </p>
+              )}
             </div>
+
+            {breakType === "NONE" && (
+              <>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="start">Entrada</Label>
+                  <Input
+                    id="start"
+                    type="time"
+                    value={start}
+                    onChange={(e) => onStartChange(e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-ink-faint">{formatHM12(start)}</p>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="end">
+                    Salida{" "}
+                    <span className="text-ink-faint font-normal">
+                      · auto +8h30
+                    </span>
+                  </Label>
+                  <Input
+                    id="end"
+                    type="time"
+                    value={end}
+                    onChange={(e) => setEnd(e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-ink-faint">{formatHM12(end)}</p>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="lstart">Break inicio</Label>
+                  <Input
+                    id="lstart"
+                    type="time"
+                    value={lunchStart}
+                    onChange={(e) => onLunchStartChange(e.target.value)}
+                  />
+                  <p className="text-xs text-ink-faint">
+                    {formatHM12(lunchStart)}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="lend">
+                    Break fin{" "}
+                    <span className="text-ink-faint font-normal">
+                      · auto +30m
+                    </span>
+                  </Label>
+                  <Input
+                    id="lend"
+                    type="time"
+                    value={lunchEnd}
+                    onChange={(e) => setLunchEnd(e.target.value)}
+                  />
+                  <p className="text-xs text-ink-faint">{formatHM12(lunchEnd)}</p>
+                </div>
+              </>
+            )}
             <div className="flex flex-col gap-1.5 sm:col-span-2">
               <Label htmlFor="notes">Notas (opcional)</Label>
               <Input

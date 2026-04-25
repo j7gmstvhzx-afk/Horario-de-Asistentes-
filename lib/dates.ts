@@ -53,6 +53,23 @@ export function formatDateShort(date: Date): string {
   return format(date, "dd-MMM-yy", { locale: es });
 }
 
+/** "lun, 20 abr 2026" */
+export function formatDateWithYear(date: Date): string {
+  const s = format(date, "EEE, d MMM yyyy", { locale: es });
+  return s.replace(/^./, (c) => c.toUpperCase());
+}
+
+/** "lunes, 20 de abril 2026" */
+export function formatDateLongWithYear(date: Date): string {
+  const s = format(date, "EEEE, d 'de' MMMM yyyy", { locale: es });
+  return s.replace(/^./, (c) => c.toUpperCase());
+}
+
+/** Range "Desde DD MMM YYYY hasta DD MMM YYYY" */
+export function formatRangeDesdeHasta(start: Date, end: Date): string {
+  return `Desde ${format(start, "d MMM yyyy", { locale: es })} hasta ${format(end, "d MMM yyyy", { locale: es })}`;
+}
+
 export function formatDateLong(date: Date): string {
   return format(date, "EEEE d 'de' MMMM, yyyy", { locale: es });
 }

@@ -58,6 +58,38 @@ export function formatRangeHM12(
   return `${formatHM12(start)} – ${formatHM12(end)}`;
 }
 
+export type BreakType = "NONE" | "VACATION" | "SICK" | "PERSONAL" | "DAY_OFF";
+
+export function breakTypeLabel(b: BreakType): string {
+  switch (b) {
+    case "VACATION":
+      return "Vacaciones";
+    case "SICK":
+      return "Enfermedad";
+    case "PERSONAL":
+      return "Personal";
+    case "DAY_OFF":
+      return "Día libre";
+    default:
+      return "";
+  }
+}
+
+export function breakTypeEmoji(b: BreakType): string {
+  switch (b) {
+    case "VACATION":
+      return "🏖️";
+    case "SICK":
+      return "🤒";
+    case "PERSONAL":
+      return "📌";
+    case "DAY_OFF":
+      return "🌴";
+    default:
+      return "";
+  }
+}
+
 /** True if the two HH:mm windows overlap (treating the second as next-day if end < start). */
 export function rangesOverlapHM(
   aStart: string,
