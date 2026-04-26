@@ -69,6 +69,7 @@ model User {
   accrualLogs  PtoAccrualLog[]
   balanceEdits BalanceEdit[]  @relation("BalanceEditsOnUser")
   balanceEditsMade BalanceEdit[] @relation("BalanceEditsByAdmin")
+  pushSubscriptions PushSubscription[]
 
   @@index([active])
   @@index([position])
@@ -201,6 +202,21 @@ model PtoAccrualLog {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, month])
+}
+
+// Stored Web Push subscriptions per user. One device = one row.
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model BalanceEdit {

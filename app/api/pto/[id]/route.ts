@@ -3,6 +3,7 @@ import { requireAdmin, requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { fail, handleError, ok } from "@/lib/api";
 import { canDeduct } from "@/lib/pto";
+import { sendToUser } from "@/lib/push";
 
 const schema = z.object({
   status: z.enum(["APPROVED", "REJECTED"]),
@@ -64,6 +65,16 @@ export async function PATCH(
         },
       });
     }
+
+    sendToUser(request.userId, {
+      title:
+        body.status === "APPROVED"
+          ? "Solicitud PTO aprobada ✓"
+          : "Solicitud PTO rechazada",
+      body: `${request.type === "VACATION" ? "Vacaciones" : "Enfermedad"} · ${Number(request.hours)}h`,
+      url: "/employee/requests",
+      tag: `pto-decision-${request.id}`,
+    }).catch(() => {});
 
     return ok({ updated: true });
   } catch (err) {

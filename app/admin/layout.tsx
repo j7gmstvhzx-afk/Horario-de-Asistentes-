@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { BottomNav, type TabItem } from "@/components/bottom-nav";
+import { PushPrompt } from "@/components/push-prompt";
 
 const tabs: TabItem[] = [
   { href: "/admin/dashboard", label: "Inicio", icon: "home" },
@@ -22,6 +23,7 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-surface">
       <div className="pb-tabbar">{children}</div>
+      <PushPrompt />
       <BottomNav tabs={tabs} />
     </div>
   );

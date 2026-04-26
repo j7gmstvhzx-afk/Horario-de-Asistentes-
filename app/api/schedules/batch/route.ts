@@ -2,8 +2,9 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { fail, handleError, ok } from "@/lib/api";
-import { fromDateString } from "@/lib/dates";
-import { isHM } from "@/lib/time-format";
+import { fromDateString, formatDateLongWithYear } from "@/lib/dates";
+import { isHM, formatRangeHM12, breakTypeLabel } from "@/lib/time-format";
+import { sendToUser } from "@/lib/push";
 
 const HM = z.string().refine(isHM, "Hora inválida (HH:mm)");
 
@@ -58,6 +59,26 @@ export async function POST(req: Request) {
     );
 
     const result = await prisma.shift.createMany({ data });
+
+    // Fan-out one notification per affected employee. Group dates so each user
+    // gets a single push describing how many turnos they got.
+    for (const userId of body.userIds) {
+      const datesForUser = body.dates.map((d) => formatDateLongWithYear(fromDateString(d)));
+      const summary =
+        datesForUser.length === 1
+          ? datesForUser[0]
+          : `${datesForUser.length} días · ${datesForUser[0]}…`;
+      const detail = isWorking
+        ? formatRangeHM12(body.startTime ?? null, body.endTime ?? null)
+        : breakTypeLabel(body.breakType);
+      sendToUser(userId, {
+        title: "Nuevos turnos asignados",
+        body: `${summary} · ${detail}`,
+        url: "/employee/schedule",
+        tag: `shift-batch-${userId}-${Date.now()}`,
+      }).catch(() => {});
+    }
+
     return ok({ created: result.count });
   } catch (err) {
     return handleError(err);
