@@ -9,6 +9,7 @@ import { calculateTips } from "@/lib/tips";
 import { PageHeader, PageContent } from "@/components/page-header";
 import { GlassCard } from "@/components/glass-card";
 import { LogoutButton } from "@/components/logout-button";
+import { PushToggle } from "@/components/push-prompt";
 
 export default async function EmployeeProfilePage() {
   const session = await requireSession();
@@ -253,6 +254,7 @@ export default async function EmployeeProfilePage() {
             </>
           )}
 
+          <PushToggle />
           <LogoutButton variant="secondary" size="lg" className="w-full" />
           <Link
             href="/employee/dashboard"

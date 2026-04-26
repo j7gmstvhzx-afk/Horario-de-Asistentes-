@@ -3,6 +3,7 @@ import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { fail, handleError, ok } from "@/lib/api";
 import { canDeduct } from "@/lib/pto";
+import { sendToRoles } from "@/lib/push";
 
 const schema = z.object({
   type: z.enum(["VACATION", "SICK"]),
@@ -49,6 +50,14 @@ export async function POST(req: Request) {
         reason: body.reason ?? null,
       },
     });
+
+    sendToRoles(["ADMIN"], {
+      title: "Nueva solicitud PTO",
+      body: `${session.fullName}: ${body.type === "VACATION" ? "Vacaciones" : "Enfermedad"} · ${body.hours}h`,
+      url: "/admin/requests",
+      tag: `pto-${request.id}`,
+    }).catch(() => {});
+
     return ok(request, { status: 201 });
   } catch (err) {
     return handleError(err);

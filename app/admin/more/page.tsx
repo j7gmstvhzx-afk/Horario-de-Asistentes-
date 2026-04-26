@@ -3,6 +3,7 @@ import { ClipboardList, ChevronRight, ClipboardCheck } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { SimpleHeader } from "@/components/page-header";
 import { LogoutButton } from "@/components/logout-button";
+import { PushToggle } from "@/components/push-prompt";
 
 export default async function AdminMorePage() {
   const session = await requireAdmin();
@@ -22,6 +23,7 @@ export default async function AdminMorePage() {
             label="Solicitudes PTO"
           />
         </section>
+        <PushToggle />
         <LogoutButton variant="secondary" size="lg" className="w-full" />
       </main>
     </>

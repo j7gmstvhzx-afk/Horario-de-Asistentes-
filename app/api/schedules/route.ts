@@ -2,8 +2,9 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { fail, handleError, ok } from "@/lib/api";
-import { fromDateString } from "@/lib/dates";
-import { isHM } from "@/lib/time-format";
+import { fromDateString, formatDateLongWithYear } from "@/lib/dates";
+import { isHM, formatRangeHM12, breakTypeLabel } from "@/lib/time-format";
+import { sendToUser } from "@/lib/push";
 
 const HM = z.string().refine(isHM, "Hora inválida (HH:mm)");
 
@@ -56,6 +57,18 @@ export async function POST(req: Request) {
         notes: body.notes ?? null,
       },
     });
+
+    // Notify the employee.
+    const dateStr = formatDateLongWithYear(fromDateString(body.date));
+    const detail = isWorking
+      ? formatRangeHM12(body.startTime ?? null, body.endTime ?? null)
+      : breakTypeLabel(body.breakType);
+    sendToUser(body.userId, {
+      title: "Nuevo turno asignado",
+      body: `${dateStr} · ${detail}`,
+      url: "/employee/schedule",
+      tag: `shift-${shift.id}`,
+    }).catch(() => {});
 
     return ok(shift, { status: 201 });
   } catch (err) {
