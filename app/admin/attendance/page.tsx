@@ -1,7 +1,7 @@
 import { addWeeks } from "date-fns";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { weekStart, weekEnd, toDateString, formatDateWithYear } from "@/lib/dates";
+import { weekStart, weekEnd, toDateString, formatDateWithYear, nowInCasino } from "@/lib/dates";
 import { SimpleHeader } from "@/components/page-header";
 import { AttendanceList } from "./attendance-list";
 
@@ -14,7 +14,7 @@ export default async function AdminAttendancePage({
   const params = await searchParams;
   const reference = params.week
     ? new Date(params.week + "T12:00:00")
-    : new Date();
+    : nowInCasino();
   const start = weekStart(reference);
   const end = weekEnd(reference);
 

@@ -1,14 +1,15 @@
 import { addWeeks } from "date-fns";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { weekStart, weekEnd, toDateString } from "@/lib/dates";
+import { weekStart, weekEnd, toDateString, nowInCasino } from "@/lib/dates";
 import { SimpleHeader } from "@/components/page-header";
 import { ScheduleList } from "./schedule-table";
 
 export default async function EmployeeSchedulePage() {
   const session = await requireSession();
-  const start = weekStart(new Date());
-  const end = weekEnd(addWeeks(new Date(), 3));
+  const now = nowInCasino();
+  const start = weekStart(now);
+  const end = weekEnd(addWeeks(now, 3));
 
   const shifts = await prisma.shift.findMany({
     where: {

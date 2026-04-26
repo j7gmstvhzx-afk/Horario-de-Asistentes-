@@ -11,6 +11,37 @@ import { es } from "date-fns/locale";
 export const CASINO_TIMEZONE =
   process.env.NEXT_PUBLIC_TIMEZONE ?? "America/Puerto_Rico";
 
+/**
+ * "Now" expressed as a Date whose local-style fields (getFullYear, getMonth,
+ * getDate, getHours, ...) match the wall-clock time at the casino. Use this
+ * instead of `new Date()` in every server-rendered page that asks "what day
+ * is it" or "what week is this", to avoid the server's UTC clock leaking into
+ * the rendered output (Vercel runs in UTC; PR is UTC-4).
+ */
+export function nowInCasino(): Date {
+  // Format the actual instant in the Casino timezone, then parse those fields
+  // back into a fresh Date with local-style getters.
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: CASINO_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value ?? 0);
+  return new Date(
+    get("year"),
+    get("month") - 1,
+    get("day"),
+    get("hour") % 24,
+    get("minute"),
+    get("second"),
+  );
+}
+
 // Work weeks start on Monday (ISO).
 export function weekStart(date: Date): Date {
   return startOfWeek(date, { weekStartsOn: 1 });

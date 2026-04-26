@@ -2,7 +2,7 @@ import { Plane, HeartPulse, Coins } from "lucide-react";
 import Link from "next/link";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { weekStart } from "@/lib/dates";
+import { weekStart, nowInCasino } from "@/lib/dates";
 import { addWeeks } from "date-fns";
 import { formatMoney, formatHours } from "@/lib/utils";
 import { calculateTips } from "@/lib/tips";
@@ -17,7 +17,7 @@ export default async function EmployeeProfilePage() {
   });
 
   // Fetch up to last 12 months for monthly history.
-  const oneYearAgo = weekStart(addWeeks(new Date(), -52));
+  const oneYearAgo = weekStart(addWeeks(nowInCasino(), -52));
   const reports = await prisma.tipReport.findMany({
     where: {
       weekStart: { gte: oneYearAgo },

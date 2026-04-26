@@ -9,7 +9,7 @@ import {
 import { addWeeks } from "date-fns";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { weekEnd, weekStart } from "@/lib/dates";
+import { weekEnd, weekStart, nowInCasino } from "@/lib/dates";
 import { detectBreakConflicts } from "@/lib/conflicts";
 import { PageHeader, PageContent } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 export default async function AdminDashboard() {
   const session = await requireAdmin();
 
-  const today = new Date();
+  const today = nowInCasino();
   const start = weekStart(today);
   const end = weekEnd(addWeeks(today, 1));
 
