@@ -2,7 +2,7 @@ import { addWeeks } from "date-fns";
 import { Plus } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { weekStart, weekEnd, weekDays, toDateString } from "@/lib/dates";
+import { weekStart, weekEnd, weekDays, toDateString, nowInCasino } from "@/lib/dates";
 import { SimpleHeader } from "@/components/page-header";
 import { Fab } from "@/components/floating-action-button";
 import { SchedulesList } from "./schedules-editor";
@@ -17,7 +17,7 @@ export default async function AdminSchedulesPage({
   const params = await searchParams;
   const reference = params.week
     ? new Date(params.week + "T12:00:00")
-    : new Date();
+    : nowInCasino();
   const start = weekStart(reference);
   const end = weekEnd(reference);
   const days = weekDays(reference);

@@ -3,7 +3,7 @@ import { Clock, Coffee, CheckCircle2, AlertCircle } from "lucide-react";
 import { addWeeks } from "date-fns";
 import { requireSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { weekStart, weekEnd, toDateString } from "@/lib/dates";
+import { weekStart, weekEnd, toDateString, nowInCasino } from "@/lib/dates";
 import {
   formatHM12,
   formatRangeHM12,
@@ -20,7 +20,7 @@ import { DashboardDayStrip } from "./dashboard-day-strip";
 
 export default async function EmployeeDashboard() {
   const session = await requireSession();
-  const today = new Date();
+  const today = nowInCasino();
   const rangeStart = weekStart(today);
   const rangeEnd = weekEnd(addWeeks(today, 1));
 
